@@ -78,7 +78,7 @@ export default async function DevedorDetailPage({
     <AppLayout>
       <div className="min-h-full bg-void">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-6 py-4">
+        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
             <Link
               href="/carteira"
@@ -92,7 +92,7 @@ export default async function DevedorDetailPage({
           </div>
         </div>
 
-        <div className="p-6 grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div className="p-4 md:p-6 grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-5">
           {/* Left: Debtor profile */}
           <div className="space-y-4">
             {/* Identity card */}

@@ -80,16 +80,16 @@ export function CarteiraClient({ dividas, credores }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-4 py-2">
+            <button className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-4 py-2">
               <Upload className="w-4 h-4" />
-              Importar CSV
+              <span className="hidden md:inline">Importar CSV</span>
             </button>
             <button
               onClick={() => setNovaDividaOpen(true)}
-              className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
+              className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 py-2 md:px-4"
             >
               <Plus className="w-4 h-4" />
-              Nova Dívida
+              <span className="hidden sm:inline">Nova Dívida</span>
             </button>
           </div>
         </div>
@@ -154,9 +154,10 @@ export function CarteiraClient({ dividas, credores }: Props) {
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table — desktop / Cards — mobile */}
         <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
-          <div className="grid grid-cols-[1fr_140px_100px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
+          {/* Desktop header */}
+          <div className="hidden md:grid grid-cols-[1fr_140px_100px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
             {['Devedor', 'Credor', 'Tipo', 'Valor Atual', 'Status', 'Dias', ''].map((h) => (
               <span key={h} className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">{h}</span>
             ))}
@@ -169,50 +170,40 @@ export function CarteiraClient({ dividas, credores }: Props) {
               </div>
             ) : (
               filtered.map((row) => (
-                <Link
-                  key={row.id}
-                  href={`/carteira/${row.devedor_id}`}
-                  className="grid grid-cols-[1fr_140px_100px_120px_80px_60px_36px] gap-3 px-5 py-3.5 items-center hover:bg-elevated/50 transition-colors group table-row-hover"
+                <Link key={row.id} href={`/carteira/${row.devedor_id}`}
+                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_140px_100px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                  {/* Mobile card layout */}
+                  <div className="flex items-center justify-between md:contents">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className="w-6 h-6 rounded-md bg-elevated border border-border-default flex items-center justify-center shrink-0">
-                        {row.devedor_tipo === 'PJ' ? (
-                          <Building2 className="w-3 h-3 text-ink-muted" />
-                        ) : (
-                          <User className="w-3 h-3 text-ink-muted" />
-                        )}
+                        {row.devedor_tipo === 'PJ' ? <Building2 className="w-3 h-3 text-ink-muted" /> : <User className="w-3 h-3 text-ink-muted" />}
                       </div>
-                      <p className="text-ink-primary text-sm font-medium truncate group-hover:text-accent-light transition-colors">
-                        {row.devedor_nome ?? `Devedor #${row.devedor_id}`}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="text-ink-primary text-sm font-medium truncate group-hover:text-accent-light transition-colors">
+                          {row.devedor_nome ?? `Devedor #${row.devedor_id}`}
+                        </p>
+                        <p className="text-ink-muted text-xs truncate md:hidden">
+                          {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 md:contents shrink-0 ml-2">
+                      <StatusBadge status={row.status as StatusDivida} size="sm" />
+                      <ChevronRight className="w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
                     </div>
                   </div>
-
-                  <span className="text-ink-secondary text-xs truncate">
+                  {/* Desktop-only columns */}
+                  <span className="hidden md:block text-ink-secondary text-xs truncate">
                     {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')}
                   </span>
-
-                  <span className="text-ink-muted text-xs font-mono">
-                    {getTipoLabel(row.tipo as any)}
-                  </span>
-
-                  <span className="font-mono text-sm font-medium text-ink-primary">
-                    {formatCurrency(row.valor_atualizado)}
-                  </span>
-
-                  <StatusBadge status={row.status as StatusDivida} size="sm" />
-
-                  <span
-                    className="font-mono text-xs font-bold"
-                    style={{
-                      color: row.dias_sem_contato >= 7 ? '#ef4444' : row.dias_sem_contato >= 3 ? '#f59e0b' : '#7a9bc8',
-                    }}
-                  >
+                  <span className="hidden md:block text-ink-muted text-xs font-mono">{getTipoLabel(row.tipo as any)}</span>
+                  <span className="hidden md:block font-mono text-sm font-medium text-ink-primary">{formatCurrency(row.valor_atualizado)}</span>
+                  <span className="hidden md:block"><StatusBadge status={row.status as StatusDivida} size="sm" /></span>
+                  <span className="hidden md:block font-mono text-xs font-bold" style={{ color: row.dias_sem_contato >= 7 ? '#ef4444' : row.dias_sem_contato >= 3 ? '#f59e0b' : '#7a9bc8' }}>
                     {row.dias_sem_contato}d
                   </span>
-
-                  <ChevronRight className="w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
+                  <ChevronRight className="hidden md:block w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
                 </Link>
               ))
             )}

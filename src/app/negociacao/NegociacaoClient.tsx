@@ -44,25 +44,25 @@ export function NegociacaoClient({ negociacoes }: Props) {
   return (
     <AppLayout>
       <div className="min-h-full bg-void">
-        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-6 py-4">
+        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-display font-bold text-xl text-ink-primary tracking-tight">Negociação</h1>
-              <p className="text-ink-muted text-xs font-mono mt-0.5">
+              <h1 className="font-display font-bold text-lg md:text-xl text-ink-primary tracking-tight">Negociação</h1>
+              <p className="text-ink-muted text-xs font-mono mt-0.5 hidden sm:block">
                 {ativas} ativas · {concluidas} concluídas · {formatCurrency(totalEmNegociacao)} em mesa
               </p>
             </div>
             <button
               onClick={() => setNovaOpen(true)}
-              className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
+              className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2"
             >
               <Plus className="w-4 h-4" />
-              Nova Negociação
+              <span className="hidden sm:inline">Nova Negociação</span>
             </button>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mb-5">
             {(Object.keys(statusConfig) as StatusNeg[]).map((s) => {
@@ -129,9 +129,9 @@ export function NegociacaoClient({ negociacoes }: Props) {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-start gap-4 shrink-0">
+                      <div className="flex items-start gap-2 shrink-0">
                         <div className="text-right">
-                          <p className="font-mono font-bold text-ink-primary text-base">{formatCurrency(neg.valor_oferta)}</p>
+                          <p className="font-mono font-bold text-ink-primary text-sm md:text-base">{formatCurrency(neg.valor_oferta)}</p>
                           {neg.desconto_percentual && (
                             <p className="font-mono text-xs text-emerald">-{neg.desconto_percentual.toFixed(1)}% desconto</p>
                           )}
@@ -148,7 +148,7 @@ export function NegociacaoClient({ negociacoes }: Props) {
 
                     {isExpanded && (
                       <div className="border-t border-border-subtle px-5 pb-5 pt-4 bg-elevated/20">
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                           <div>
                             <p className="text-ink-muted text-[10px] font-mono uppercase tracking-wider mb-1">Valor Original</p>
                             <p className="font-mono text-ink-primary text-sm font-medium">{formatCurrency(neg.valor_original)}</p>

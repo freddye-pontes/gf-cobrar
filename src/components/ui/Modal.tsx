@@ -30,10 +30,10 @@ export function Modal({ title, open, onClose, children, footer, size = 'md' }: P
   const widths = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div
-        className={`relative w-full ${widths[size]} bg-surface border border-border-subtle rounded-2xl shadow-2xl flex flex-col max-h-[90vh]`}
+        className={`relative w-full sm:${widths[size]} bg-surface border-t sm:border border-border-subtle rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh]`}
         style={{ animation: 'fadeUp 0.15s ease-out' }}
       >
         {/* Header */}

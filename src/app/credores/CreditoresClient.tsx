@@ -44,29 +44,29 @@ export function CreditoresClient({ credores, repasses }: Props) {
     <>
     <AppLayout>
       <div className="min-h-full bg-void">
-        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-6 py-4">
+        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-display font-bold text-xl text-ink-primary tracking-tight">
+              <h1 className="font-display font-bold text-lg md:text-xl text-ink-primary tracking-tight">
                 Gestão de Credores
               </h1>
-              <p className="text-ink-muted text-xs font-mono mt-0.5">
+              <p className="text-ink-muted text-xs font-mono mt-0.5 hidden sm:block">
                 {credores.length} credores · {formatCurrencyCompact(totalCarteira)} em carteira · {taxaMedia}% recuperado
               </p>
             </div>
             <button
               onClick={() => setNovoCredorOpen(true)}
-              className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
+              className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2"
             >
               <Plus className="w-4 h-4" />
-              Novo Credor
+              <span className="hidden sm:inline">Novo Credor</span>
             </button>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Summary cards */}
-          <div className="grid grid-cols-3 gap-3 mb-6 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
             {[
               { label: 'Total em Carteira', value: formatCurrencyCompact(totalCarteira), Icon: DollarSign, color: '#3b82f6' },
               { label: 'Total Recuperado', value: formatCurrencyCompact(totalRecuperado), Icon: CheckCircle2, color: '#34d399' },
@@ -136,7 +136,7 @@ export function CreditoresClient({ credores, repasses }: Props) {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 shrink-0 text-right">
+                    <div className="hidden sm:grid grid-cols-3 gap-4 shrink-0 text-right">
                       <div>
                         <p className="text-ink-muted text-[10px] font-mono uppercase">Carteira</p>
                         <p className="font-mono text-ink-primary text-sm font-bold mt-0.5">
@@ -174,7 +174,7 @@ export function CreditoresClient({ credores, repasses }: Props) {
 
                   {isExpanded && (
                     <div className="border-t border-border-subtle bg-elevated/20">
-                      <div className="p-5 grid grid-cols-2 gap-6">
+                      <div className="p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                         <div>
                           <h4 className="text-ink-muted text-[10px] font-mono uppercase tracking-wider mb-3">
                             Configurações

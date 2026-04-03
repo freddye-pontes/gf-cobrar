@@ -43,35 +43,35 @@ export function ReguaClient({ credores }: Props) {
   return (
     <AppLayout>
       <div className="min-h-full bg-void">
-        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display font-bold text-xl text-ink-primary tracking-tight">
+        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="font-display font-bold text-lg md:text-xl text-ink-primary tracking-tight">
                 Régua de Cobrança
               </h1>
-              <p className="text-ink-muted text-xs font-mono mt-0.5">
+              <p className="text-ink-muted text-xs font-mono mt-0.5 hidden sm:block">
                 Fluxo de contato automático por credor
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <select
                 value={selectedCredorId}
                 onChange={(e) => setSelectedCredorId(Number(e.target.value))}
-                className="appearance-none bg-surface border border-border-subtle rounded-lg px-4 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50"
+                className="appearance-none bg-surface border border-border-subtle rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 max-w-[140px] sm:max-w-none truncate"
               >
                 {credores.map((c) => (
                   <option key={c.id} value={c.id}>{c.razao_social}</option>
                 ))}
               </select>
-              <button className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-4 py-2">
+              <button className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2">
                 <Settings2 className="w-4 h-4" />
-                Editar Régua
+                <span className="hidden sm:inline">Editar Régua</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 md:p-6">
           {/* Credor info */}
           {credor && (
             <div className="bg-surface border border-border-subtle rounded-xl p-4 mb-6 flex items-center gap-4 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
@@ -94,7 +94,7 @@ export function ReguaClient({ credores }: Props) {
           )}
 
           {/* Adaptive responses + Pause rules */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="bg-surface border border-border-subtle rounded-xl p-5 animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
               <h3 className="font-display font-semibold text-ink-primary text-sm mb-4">Adaptação por Resposta</h3>
               <div className="space-y-3">

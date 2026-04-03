@@ -13,6 +13,8 @@ import {
   ChevronRight,
   Activity,
   Bell,
+  Menu,
+  X,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -29,27 +31,20 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
-  return (
-    <aside
-      className={cn(
-        'relative flex flex-col h-screen shrink-0 transition-all duration-300 ease-in-out',
-        'bg-surface border-r border-border-subtle',
-        collapsed ? 'w-[60px]' : 'w-[220px]'
-      )}
-    >
+  const SidebarContent = () => (
+    <>
       {/* Logo */}
-      <div
-        className={cn(
-          'flex items-center gap-3 border-b border-border-subtle',
-          collapsed ? 'justify-center px-0 py-4' : 'px-4 py-4'
-        )}
-      >
+      <div className={cn(
+        'flex items-center gap-3 border-b border-border-subtle',
+        collapsed ? 'justify-center px-0 py-4' : 'px-4 py-4'
+      )}>
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent shrink-0 glow-accent">
           <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>
         {!collapsed && (
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">
               GF Cobrar
             </div>
@@ -58,6 +53,13 @@ export function Sidebar() {
             </div>
           </div>
         )}
+        {/* Close button on mobile */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden ml-auto text-ink-muted hover:text-ink-primary"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Alerts pill */}
@@ -75,12 +77,12 @@ export function Sidebar() {
           {navItems.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             const Icon = item.icon
-
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 title={collapsed ? item.label : undefined}
+                onClick={() => setMobileOpen(false)}
                 className={cn(
                   'group flex items-center rounded-lg transition-all duration-150',
                   collapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5',
@@ -89,13 +91,11 @@ export function Sidebar() {
                     : 'text-ink-secondary hover:bg-elevated hover:text-ink-primary'
                 )}
               >
-                <Icon
-                  className={cn(
-                    'shrink-0 transition-transform group-hover:scale-110',
-                    collapsed ? 'w-5 h-5' : 'w-4 h-4',
-                    isActive && 'text-accent-light'
-                  )}
-                />
+                <Icon className={cn(
+                  'shrink-0 transition-transform group-hover:scale-110',
+                  collapsed ? 'w-5 h-5' : 'w-4 h-4',
+                  isActive && 'text-accent-light'
+                )} />
                 {!collapsed && (
                   <>
                     <span className="text-sm font-medium flex-1">{item.label}</span>
@@ -113,7 +113,6 @@ export function Sidebar() {
         </div>
       </nav>
 
-      {/* Divider */}
       <div className="mx-3 border-t border-border-subtle" />
 
       {/* Operator info */}
@@ -134,11 +133,11 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* Collapse button */}
+      {/* Collapse button — desktop only */}
       <button
         onClick={() => setCollapsed(!collapsed)}
         className={cn(
-          'flex items-center justify-center py-2.5 text-ink-muted hover:text-ink-secondary',
+          'hidden md:flex items-center justify-center py-2.5 text-ink-muted hover:text-ink-secondary',
           'hover:bg-elevated transition-colors border-t border-border-subtle',
           collapsed ? 'w-full' : 'mx-2 mb-2 rounded-lg border-t-0'
         )}
@@ -152,20 +151,49 @@ export function Sidebar() {
           </>
         )}
       </button>
+    </>
+  )
 
-      {/* Deerflow branding */}
-      {!collapsed && (
-        <div className="px-3 pb-3 flex justify-center">
-          <a
-            href="https://deerflow.tech"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[10px] font-mono text-ink-disabled hover:text-ink-muted transition-colors"
-          >
-            ✦ Deerflow
-          </a>
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-surface border-b border-border-subtle">
+        <button onClick={() => setMobileOpen(true)} className="text-ink-secondary hover:text-ink-primary">
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center w-6 h-6 rounded bg-accent">
+            <Activity className="w-3 h-3 text-white" strokeWidth={2.5} />
+          </div>
+          <span className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">GF Cobrar</span>
         </div>
+      </div>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
-    </aside>
+
+      {/* Mobile drawer */}
+      <aside className={cn(
+        'md:hidden fixed top-0 left-0 z-50 flex flex-col h-screen w-[260px]',
+        'bg-surface border-r border-border-subtle transition-transform duration-300',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      )}>
+        <SidebarContent />
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className={cn(
+        'hidden md:flex flex-col h-screen shrink-0 transition-all duration-300 ease-in-out',
+        'bg-surface border-r border-border-subtle',
+        collapsed ? 'w-[60px]' : 'w-[220px]'
+      )}>
+        <SidebarContent />
+      </aside>
+    </>
   )
 }

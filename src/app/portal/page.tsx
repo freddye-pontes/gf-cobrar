@@ -134,19 +134,19 @@ export default function PortalPage() {
   return (
     <div className="min-h-screen bg-void">
       {/* Portal header */}
-      <div className="bg-surface border-b border-border-subtle px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center">
+      <div className="bg-surface border-b border-border-subtle px-4 md:px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-accent/20 border border-accent/30 flex items-center justify-center shrink-0">
               <Building2 className="w-4 h-4 text-accent-light" />
             </div>
-            <div>
-              <p className="font-display font-semibold text-ink-primary text-sm">{credor?.razao_social}</p>
-              <p className="text-ink-muted text-[10px] font-mono">Portal Somente Leitura · {credor?.contato_email}</p>
+            <div className="min-w-0">
+              <p className="font-display font-semibold text-ink-primary text-sm truncate">{credor?.razao_social}</p>
+              <p className="text-ink-muted text-[10px] font-mono hidden sm:block">Portal Somente Leitura · {credor?.contato_email}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 bg-emerald-dim border border-emerald/20 rounded-lg px-3 py-1.5">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden sm:flex items-center gap-1.5 bg-emerald-dim border border-emerald/20 rounded-lg px-3 py-1.5">
               <Eye className="w-3.5 h-3.5 text-emerald" />
               <span className="text-emerald text-xs font-mono">Somente leitura</span>
             </div>
@@ -155,13 +155,13 @@ export default function PortalPage() {
               className="flex items-center gap-1.5 text-ink-muted hover:text-ink-secondary transition-colors text-xs"
             >
               <LogOut className="w-3.5 h-3.5" />
-              Sair
+              <span className="hidden sm:inline">Sair</span>
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-4 md:space-y-6">
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
           {[

@@ -68,16 +68,16 @@ export default async function DashboardPage() {
     <AppLayout>
       <div className="min-h-full bg-void">
         {/* Page Header */}
-        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display font-bold text-xl text-ink-primary tracking-tight">
+        <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="font-display font-bold text-lg md:text-xl text-ink-primary tracking-tight">
                 Dashboard Operacional
               </h1>
-              <p className="text-ink-muted text-xs font-mono mt-0.5 capitalize">{today}</p>
+              <p className="text-ink-muted text-xs font-mono mt-0.5 capitalize hidden sm:block">{today}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 bg-surface border border-border-subtle rounded-lg px-3 py-2">
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="hidden sm:flex items-center gap-2 bg-surface border border-border-subtle rounded-lg px-3 py-2">
                 <span className={`w-2 h-2 rounded-full ${isOffline ? 'bg-danger' : 'bg-emerald animate-pulse-dot'}`} />
                 <span className="text-ink-secondary text-xs font-mono">
                   {isOffline ? 'API offline' : 'Sistema online'}
@@ -85,16 +85,16 @@ export default async function DashboardPage() {
               </div>
               <Link
                 href="/carteira"
-                className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
+                className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2"
               >
                 <Zap className="w-4 h-4" />
-                Importar CSV
+                <span className="hidden sm:inline">Importar CSV</span>
               </Link>
             </div>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           {/* KPI Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             <KPICard
