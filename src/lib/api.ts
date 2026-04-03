@@ -1,4 +1,5 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1'
+const _rawUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1'
+const BASE_URL = _rawUrl.replace(/^http:\/\/(?!localhost)/, 'https://')
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
