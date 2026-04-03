@@ -182,11 +182,11 @@ export const dividasApi = {
   },
   workQueue: () => get<APIDividaListOut[]>('/dividas/work-queue'),
   get: (id: number) => get<APIDividaOut>(`/dividas/${id}`),
-  create: (body: unknown) => post<APIDividaOut>('/dividas', body),
+  create: (body: unknown) => post<APIDividaOut>('/dividas/', body),
   updateStatus: (id: number, body: { status: string; nota?: string; operador_nome?: string }) =>
-    put<APIDividaOut>(`/dividas/${id}/status`, body),
+    put<APIDividaOut>(`/dividas/${id}/status/`, body),
   addHistorico: (id: number, body: { canal: string; resultado: string; operador_nome?: string }) =>
-    post<APIHistoricoContato>(`/dividas/${id}/historico`, body),
+    post<APIHistoricoContato>(`/dividas/${id}/historico/`, body),
 }
 
 // ── Devedores ─────────────────────────────────────────────────────────────────
@@ -200,8 +200,8 @@ export const devedoresApi = {
     return get<APIDevedor[]>(`/devedores${q ? `?${q}` : ''}`)
   },
   get: (id: number) => get<APIDevedor>(`/devedores/${id}`),
-  create: (body: unknown) => post<APIDevedor>('/devedores', body),
-  update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}`, body),
+  create: (body: unknown) => post<APIDevedor>('/devedores/', body),
+  update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}/`, body),
 }
 
 // ── Credores ──────────────────────────────────────────────────────────────────
@@ -209,8 +209,8 @@ export const devedoresApi = {
 export const credoresApi = {
   list: () => get<APICredorOut[]>('/credores'),
   get: (id: number) => get<APICredorOut>(`/credores/${id}`),
-  create: (body: unknown) => post<APICredorOut>('/credores', body),
-  update: (id: number, body: unknown) => put<APICredorOut>(`/credores/${id}`, body),
+  create: (body: unknown) => post<APICredorOut>('/credores/', body),
+  update: (id: number, body: unknown) => put<APICredorOut>(`/credores/${id}/`, body),
 }
 
 // ── Negociações ───────────────────────────────────────────────────────────────
@@ -221,8 +221,8 @@ export const negociacoesApi = {
     return get<APINegociacaoOut[]>(`/negociacoes${qs}`)
   },
   get: (id: number) => get<APINegociacaoOut>(`/negociacoes/${id}`),
-  create: (body: unknown) => post<APINegociacaoOut>('/negociacoes', body),
-  update: (id: number, body: unknown) => put<APINegociacaoOut>(`/negociacoes/${id}`, body),
+  create: (body: unknown) => post<APINegociacaoOut>('/negociacoes/', body),
+  update: (id: number, body: unknown) => put<APINegociacaoOut>(`/negociacoes/${id}/`, body),
 }
 
 // ── Repasses ──────────────────────────────────────────────────────────────────
@@ -233,7 +233,7 @@ export const repassesApi = {
     return get<APIRepasseOut[]>(`/repasses${qs}`)
   },
   get: (id: number) => get<APIRepasseOut>(`/repasses/${id}`),
-  create: (body: unknown) => post<APIRepasseOut>('/repasses', body),
-  aprovar: (id: number) => put<APIRepasseOut>(`/repasses/${id}/aprovar`, {}),
-  executar: (id: number) => put<APIRepasseOut>(`/repasses/${id}/executar`, {}),
+  create: (body: unknown) => post<APIRepasseOut>('/repasses/', body),
+  aprovar: (id: number) => put<APIRepasseOut>(`/repasses/${id}/aprovar/`, {}),
+  executar: (id: number) => put<APIRepasseOut>(`/repasses/${id}/executar/`, {}),
 }
