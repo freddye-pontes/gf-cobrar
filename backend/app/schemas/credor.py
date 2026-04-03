@@ -6,9 +6,9 @@ from typing import Optional
 class CredorBase(BaseModel):
     razao_social: str
     cnpj: str
-    pix_key: str
-    contato_nome: str
-    contato_email: str
+    pix_key: Optional[str] = ""
+    contato_nome: Optional[str] = ""
+    contato_email: Optional[str] = ""
     comissao_percentual: float
     limite_desconto: float
     ativo: bool = True
