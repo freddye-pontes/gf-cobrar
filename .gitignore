@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+venv/
+.venv/
+
+# Environment variables (NUNCA commitar estes arquivos)
+.env
+backend/.env
+*.env.local
+*.env.production
+
+# Next.js
+.next/
+out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Build
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,68 @@
+<h2>Dashboard Operacional</h2>
+<p class="subtitle">O que o operador vê ao entrar no sistema todo dia</p>
+
+<div style="display:flex; flex-direction:column; gap:1.5rem; margin-top:1rem;">
+
+  <!-- KPIs do topo -->
+  <div class="section">
+    <p class="label">Visão geral (topo da tela)</p>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+      <div style="flex:1; min-width:120px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem; text-align:center;">
+        <p style="margin:0; font-size:0.72rem; color:#64748b; text-transform:uppercase;">Total em carteira</p>
+        <p style="margin:0.25rem 0 0; font-size:1.4rem; font-weight:700; color:#e2e8f0;">R$ 847k</p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#1e293b; border:1px solid #16a34a; border-radius:8px; padding:0.875rem; text-align:center;">
+        <p style="margin:0; font-size:0.72rem; color:#64748b; text-transform:uppercase;">Recuperado (mês)</p>
+        <p style="margin:0.25rem 0 0; font-size:1.4rem; font-weight:700; color:#86efac;">R$ 124k</p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#1e293b; border:1px solid #facc15; border-radius:8px; padding:0.875rem; text-align:center;">
+        <p style="margin:0; font-size:0.72rem; color:#64748b; text-transform:uppercase;">PTP ativas</p>
+        <p style="margin:0.25rem 0 0; font-size:1.4rem; font-weight:700; color:#fde68a;">38</p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#1e293b; border:1px solid #ef4444; border-radius:8px; padding:0.875rem; text-align:center;">
+        <p style="margin:0; font-size:0.72rem; color:#64748b; text-transform:uppercase;">Sem contato há 7d+</p>
+        <p style="margin:0.25rem 0 0; font-size:1.4rem; font-weight:700; color:#fca5a5;">67</p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem; text-align:center;">
+        <p style="margin:0; font-size:0.72rem; color:#64748b; text-transform:uppercase;">Tarefas hoje</p>
+        <p style="margin:0.25rem 0 0; font-size:1.4rem; font-weight:700; color:#e2e8f0;">23</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fila de trabalho -->
+  <div class="section">
+    <p class="label">Fila de trabalho do operador (priorizada automaticamente)</p>
+    <div style="background:#0f172a; border:1px solid #334155; border-radius:8px; overflow:hidden;">
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1.5fr; padding:0.5rem 0.875rem; background:#1e293b; font-size:0.72rem; color:#64748b; text-transform:uppercase; gap:0.5rem;">
+        <span>Devedor</span><span>Valor</span><span>Credor</span><span>Status</span><span>Ação</span>
+      </div>
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1.5fr; padding:0.625rem 0.875rem; font-size:0.8rem; color:#cbd5e1; gap:0.5rem; border-top:1px solid #1e293b; align-items:center;">
+        <span>João da Silva</span><span style="color:#86efac;">R$ 3.200</span><span>Credor A</span><span style="color:#facc15;">PTP vence hoje</span><span style="color:#818cf8; font-size:0.75rem;">📞 Confirmar pagamento</span>
+      </div>
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1.5fr; padding:0.625rem 0.875rem; font-size:0.8rem; color:#cbd5e1; gap:0.5rem; border-top:1px solid #1e293b; align-items:center; background:#1a1f2e;">
+        <span>Maria Oliveira</span><span style="color:#86efac;">R$ 8.500</span><span>Credor B</span><span style="color:#f87171;">Sem resposta D7</span><span style="color:#818cf8; font-size:0.75rem;">📞 Ligar agora</span>
+      </div>
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1.5fr; padding:0.625rem 0.875rem; font-size:0.8rem; color:#cbd5e1; gap:0.5rem; border-top:1px solid #1e293b; align-items:center;">
+        <span>Carlos Ferreira</span><span style="color:#86efac;">R$ 1.750</span><span>Credor A</span><span style="color:#93c5fd;">Quer negociar</span><span style="color:#818cf8; font-size:0.75rem;">🤝 Abrir negociação</span>
+      </div>
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1.5fr; padding:0.625rem 0.875rem; font-size:0.8rem; color:#94a3b8; gap:0.5rem; border-top:1px solid #1e293b; align-items:center; background:#1a1f2e;">
+        <span style="color:#475569;">+ 19 mais na fila...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros e busca -->
+  <div class="section">
+    <p class="label">Filtros rápidos</p>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+      <span style="background:#6366f1; color:#fff; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.78rem;">Todos</span>
+      <span style="background:#1e293b; color:#94a3b8; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.78rem; border:1px solid #334155;">PTP vencendo</span>
+      <span style="background:#1e293b; color:#94a3b8; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.78rem; border:1px solid #334155;">Sem contato</span>
+      <span style="background:#1e293b; color:#94a3b8; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.78rem; border:1px solid #334155;">Negociando</span>
+      <span style="background:#1e293b; color:#94a3b8; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.78rem; border:1px solid #334155;">Credor A</span>
+      <span style="background:#1e293b; color:#94a3b8; padding:0.25rem 0.75rem; border-radius:999px; font-size:0.78rem; border:1px solid #334155;">Alto valor</span>
+    </div>
+  </div>
+
+</div>

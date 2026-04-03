@@ -1,0 +1,85 @@
+<h2>Arquitetura do Sistema</h2>
+<p class="subtitle">Visão geral dos módulos e como se conectam</p>
+
+<div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+
+  <!-- Camada de entrada -->
+  <div class="section">
+    <p class="label">Entrada de dados</p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:1rem; text-align:center;">
+        <div style="font-size:1.5rem">📂</div>
+        <h3 style="margin:0.5rem 0 0.25rem">Importação</h3>
+        <p style="margin:0; font-size:0.8rem; color:#94a3b8">CSV / Excel<br>API credor<br>Entrada manual</p>
+      </div>
+      <div style="display:flex; align-items:center; font-size:1.5rem; color:#64748b;">→</div>
+      <div style="flex:2; min-width:200px; background:#0f172a; border:2px solid #6366f1; border-radius:8px; padding:1rem; text-align:center;">
+        <div style="font-size:1.5rem">⚙️</div>
+        <h3 style="margin:0.5rem 0 0.25rem; color:#818cf8">Backend API</h3>
+        <p style="margin:0; font-size:0.8rem; color:#94a3b8">FastAPI (Python)<br>PostgreSQL<br>Regras de negócio</p>
+      </div>
+      <div style="display:flex; align-items:center; font-size:1.5rem; color:#64748b;">→</div>
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:1rem; text-align:center;">
+        <div style="font-size:1.5rem">🖥️</div>
+        <h3 style="margin:0.5rem 0 0.25rem">Frontend</h3>
+        <p style="margin:0; font-size:0.8rem; color:#94a3b8">Next.js<br>Dashboard operacional<br>Portal do credor</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Módulos principais -->
+  <div class="section">
+    <p class="label">Módulos principais</p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:0.875rem;">
+        <div style="font-size:1.2rem">👥</div>
+        <h3 style="margin:0.375rem 0 0.25rem; font-size:0.95rem">Carteira</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">Devedores, dívidas, vínculos com credores</p>
+      </div>
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:0.875rem;">
+        <div style="font-size:1.2rem">📋</div>
+        <h3 style="margin:0.375rem 0 0.25rem; font-size:0.95rem">Régua de Cobrança</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">Fluxos automáticos por perfil de devedor</p>
+      </div>
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:0.875rem;">
+        <div style="font-size:1.2rem">💬</div>
+        <h3 style="margin:0.375rem 0 0.25rem; font-size:0.95rem">Multicanal</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">WhatsApp + E-mail + Ligação (registro)</p>
+      </div>
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:0.875rem;">
+        <div style="font-size:1.2rem">🤝</div>
+        <h3 style="margin:0.375rem 0 0.25rem; font-size:0.95rem">Negociação</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">PTP, parcelamentos, descontos</p>
+      </div>
+      <div style="flex:1; min-width:140px; background:#1e293b; border:1px solid #334155; border-radius:8px; padding:0.875rem;">
+        <div style="font-size:1.2rem">📊</div>
+        <h3 style="margin:0.375rem 0 0.25rem; font-size:0.95rem">Credores & Repasse</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">Relatórios, comissões, repasses</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integrações -->
+  <div class="section">
+    <p class="label">Integrações externas</p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <div style="flex:1; min-width:120px; background:#14532d; border:1px solid #16a34a; border-radius:8px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.2rem">📱</div>
+        <p style="margin:0.25rem 0 0; font-size:0.8rem">Evolution API<br><span style="color:#86efac">WhatsApp</span></p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#1e3a5f; border:1px solid #2563eb; border-radius:8px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.2rem">📧</div>
+        <p style="margin:0.25rem 0 0; font-size:0.8rem">SMTP / SendGrid<br><span style="color:#93c5fd">E-mail</span></p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#3b1f2b; border:1px solid #9f1239; border-radius:8px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.2rem">💳</div>
+        <p style="margin:0.25rem 0 0; font-size:0.8rem">Serasa / SPC<br><span style="color:#fda4af">Score crédito</span></p>
+      </div>
+      <div style="flex:1; min-width:120px; background:#1c1917; border:1px solid #78716c; border-radius:8px; padding:0.75rem; text-align:center;">
+        <div style="font-size:1.2rem">🏦</div>
+        <p style="margin:0.25rem 0 0; font-size:0.8rem">PIX / Boleto<br><span style="color:#d6d3d1">Pagamentos</span></p>
+      </div>
+    </div>
+  </div>
+
+</div>

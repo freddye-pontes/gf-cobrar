@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: #040911;
+  color: #dce8fc;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #070e1c; }
+::-webkit-scrollbar-thumb { background: #1e3566; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2a4a88; }
+
+/* Animated stagger utilities */
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.10s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.20s; opacity: 0; }
+.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+.stagger-6 { animation-delay: 0.30s; opacity: 0; }
+
+/* Grid scan line effect for cards */
+.scan-lines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,255,255,0.012) 2px,
+    rgba(255,255,255,0.012) 4px
+  );
+  pointer-events: none;
+}
+
+/* Glow effects */
+.glow-accent { box-shadow: 0 0 20px rgba(37,99,235,0.15), 0 0 40px rgba(37,99,235,0.05); }
+.glow-amber { box-shadow: 0 0 20px rgba(245,158,11,0.15), 0 0 40px rgba(245,158,11,0.05); }
+.glow-emerald { box-shadow: 0 0 20px rgba(16,185,129,0.15); }
+.glow-danger { box-shadow: 0 0 20px rgba(239,68,68,0.15); }
+
+/* Active nav indicator */
+.nav-active-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59,130,246,0.8);
+}
+
+/* Table rows */
+.table-row-hover:hover {
+  background: rgba(17, 31, 61, 0.7);
+}
+
+/* Priority border indicators */
+.priority-alta { border-left: 3px solid #ef4444; }
+.priority-media { border-left: 3px solid #f59e0b; }
+.priority-baixa { border-left: 3px solid #3b82f6; }
+
+/* Shimmer loading */
+.shimmer-bg {
+  background: linear-gradient(90deg, #0c1628 25%, #111f3d 50%, #0c1628 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.5s infinite;
+}

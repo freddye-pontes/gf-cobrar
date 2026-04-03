@@ -1,0 +1,101 @@
+<h2>Gestão de Credores & Repasses</h2>
+<p class="subtitle">Como o sistema controla cada cliente credor, suas carteiras e o que você deve a eles</p>
+
+<div style="display:flex; flex-direction:column; gap:1.5rem; margin-top:1rem;">
+
+  <!-- Cadastro do credor -->
+  <div class="section">
+    <p class="label">Cadastro do credor</p>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+      <div style="flex:1; min-width:180px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:0.9rem; color:#e2e8f0">🏢 Dados cadastrais</h3>
+        <ul style="margin:0; padding-left:1.1rem; font-size:0.78rem; color:#94a3b8;">
+          <li>Razão social / CNPJ</li>
+          <li>Conta bancária para repasse</li>
+          <li>Contato responsável</li>
+        </ul>
+      </div>
+      <div style="flex:1; min-width:180px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:0.9rem; color:#e2e8f0">📋 Régua própria</h3>
+        <ul style="margin:0; padding-left:1.1rem; font-size:0.78rem; color:#94a3b8;">
+          <li>Fluxo de cobrança exclusivo</li>
+          <li>Prazo máximo de tentativa</li>
+          <li>Tom de comunicação</li>
+        </ul>
+      </div>
+      <div style="flex:1; min-width:180px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:0.9rem; color:#e2e8f0">💰 Comissão</h3>
+        <ul style="margin:0; padding-left:1.1rem; font-size:0.78rem; color:#94a3b8;">
+          <li>% sobre valor recuperado</li>
+          <li>Pode variar por tipo de dívida</li>
+          <li>Calculada automaticamente</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ciclo de repasse -->
+  <div class="section">
+    <p class="label">Ciclo de repasse automático</p>
+    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+
+      <div style="flex:1; min-width:110px; background:#14532d; border:1px solid #16a34a; border-radius:8px; padding:0.875rem; text-align:center;">
+        <div style="font-size:1.2rem">💰</div>
+        <p style="margin:0.4rem 0 0; font-size:0.78rem; color:#d1fae5"><strong>Devedor paga</strong><br>Valor confirmado</p>
+      </div>
+
+      <div style="color:#64748b; font-size:1.2rem;">→</div>
+
+      <div style="flex:1; min-width:110px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem; text-align:center;">
+        <div style="font-size:1.2rem">🧮</div>
+        <p style="margin:0.4rem 0 0; font-size:0.78rem; color:#cbd5e1"><strong>Cálculo</strong><br>Valor bruto<br>− comissão<br>= repasse</p>
+      </div>
+
+      <div style="color:#64748b; font-size:1.2rem;">→</div>
+
+      <div style="flex:1; min-width:110px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem; text-align:center;">
+        <div style="font-size:1.2rem">📋</div>
+        <p style="margin:0.4rem 0 0; font-size:0.78rem; color:#cbd5e1"><strong>Lote</strong><br>Agrupa repasses<br>do período</p>
+      </div>
+
+      <div style="color:#64748b; font-size:1.2rem;">→</div>
+
+      <div style="flex:1; min-width:110px; background:#1e3a5f; border:1px solid #2563eb; border-radius:8px; padding:0.875rem; text-align:center;">
+        <div style="font-size:1.2rem">🏦</div>
+        <p style="margin:0.4rem 0 0; font-size:0.78rem; color:#bfdbfe"><strong>Repasse</strong><br>PIX para conta<br>do credor</p>
+      </div>
+
+      <div style="color:#64748b; font-size:1.2rem;">→</div>
+
+      <div style="flex:1; min-width:110px; background:#1e293b; border:1px solid #475569; border-radius:8px; padding:0.875rem; text-align:center;">
+        <div style="font-size:1.2rem">📊</div>
+        <p style="margin:0.4rem 0 0; font-size:0.78rem; color:#cbd5e1"><strong>Relatório</strong><br>Enviado ao credor<br>por e-mail</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Portal do credor -->
+  <div class="section">
+    <p class="label">Portal do credor (acesso externo)</p>
+    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+
+      <div style="flex:1; min-width:160px; background:#1e293b; border:1px solid #6366f1; border-radius:8px; padding:0.875rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:0.9rem; color:#a5b4fc">📈 Dashboard próprio</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">Credor vê em tempo real: total da carteira, % recuperado, status de cada dívida</p>
+      </div>
+
+      <div style="flex:1; min-width:160px; background:#1e293b; border:1px solid #6366f1; border-radius:8px; padding:0.875rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:0.9rem; color:#a5b4fc">📄 Extratos e repasses</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">Histórico de todos os repasses, comissões descontadas e comprovantes</p>
+      </div>
+
+      <div style="flex:1; min-width:160px; background:#1e293b; border:1px solid #6366f1; border-radius:8px; padding:0.875rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:0.9rem; color:#a5b4fc">🔒 Acesso isolado</h3>
+        <p style="margin:0; font-size:0.78rem; color:#94a3b8">Cada credor enxerga apenas a própria carteira — sem misturar dados</p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
