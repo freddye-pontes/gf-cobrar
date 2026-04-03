@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -5,12 +6,15 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.routers import credores, devedores, dividas, negociacoes, repasses, dashboard
 
+# Docs only available in development
+_is_dev = os.getenv("ENVIRONMENT", "production") == "development"
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if _is_dev else None,
+    redoc_url="/redoc" if _is_dev else None,
+    openapi_url="/openapi.json" if _is_dev else None,
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
