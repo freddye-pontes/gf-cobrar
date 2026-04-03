@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "GF Cobrar API"
     APP_VERSION: str = "1.0.0"
     API_PREFIX: str = "/api/v1"
+    ENVIRONMENT: str = "production"
 
     @property
     def cors_origins_list(self) -> List[str]:
