@@ -7,14 +7,14 @@ from alembic import context
 # Add backend/ to path so app imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.core.config import settings
 from app.models.base import Base
-import app.models  # noqa — ensure all models are registered
+import app.models  # noqa: F401 — ensure all models are registered
 
 config = context.config
 
-# Override sqlalchemy.url from settings (reads .env)
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Read DATABASE_URL directly from environment variable
+_db_url = os.environ.get("DATABASE_URL", "postgresql://postgres:senha@localhost:5432/gf_cobrar")
+config.set_main_option("sqlalchemy.url", _db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
