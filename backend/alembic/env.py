@@ -13,7 +13,10 @@ import app.models  # noqa: F401 — ensure all models are registered
 config = context.config
 
 # Read DATABASE_URL directly from environment (handles empty string too)
-_db_url = os.environ.get("DATABASE_URL") or "postgresql://postgres:senha@localhost:5432/gf_cobrar"
+_raw = os.environ.get("DATABASE_URL", "NOT_SET")
+print(f"[ALEMBIC DEBUG] DATABASE_URL raw value: '{_raw[:50] if _raw else 'EMPTY'}'", flush=True)
+_db_url = _raw if (_raw and _raw != "NOT_SET") else "postgresql://postgres:senha@localhost:5432/gf_cobrar"
+print(f"[ALEMBIC DEBUG] _db_url starts with: '{_db_url[:30]}'", flush=True)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
