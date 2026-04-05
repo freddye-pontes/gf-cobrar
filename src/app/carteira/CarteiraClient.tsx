@@ -6,9 +6,10 @@ import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { formatCurrency, getTipoLabel } from '@/lib/utils'
 import { NovaDividaModal } from '@/components/modals/NovaDividaModal'
+import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
 import {
   Search, Filter, Upload, ChevronRight,
-  Building2, User, ArrowUpDown, Plus,
+  Building2, User, ArrowUpDown, Plus, UserPlus,
 } from 'lucide-react'
 import type { APIDividaListOut, APICredorOut } from '@/lib/api'
 import type { StatusDivida } from '@/lib/types'
@@ -35,6 +36,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
   const [credorFilter, setCredorFilter] = useState('')
   const [sortBy, setSortBy] = useState<'valor' | 'dias' | 'vencimento'>('dias')
   const [novaDividaOpen, setNovaDividaOpen] = useState(false)
+  const [novoDevedorOpen, setNovoDevedorOpen] = useState(false)
 
   const filtered = useMemo(() => {
     let result = dividas
@@ -83,6 +85,13 @@ export function CarteiraClient({ dividas, credores }: Props) {
             <button className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-4 py-2">
               <Upload className="w-4 h-4" />
               <span className="hidden md:inline">Importar CSV</span>
+            </button>
+            <button
+              onClick={() => setNovoDevedorOpen(true)}
+              className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-3 py-2 md:px-4"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span className="hidden md:inline">Novo Devedor</span>
             </button>
             <button
               onClick={() => setNovaDividaOpen(true)}
@@ -215,6 +224,11 @@ export function CarteiraClient({ dividas, credores }: Props) {
       <NovaDividaModal
         open={novaDividaOpen}
         onClose={() => setNovaDividaOpen(false)}
+        onSuccess={() => router.refresh()}
+      />
+      <NovoDevedorModal
+        open={novoDevedorOpen}
+        onClose={() => setNovoDevedorOpen(false)}
         onSuccess={() => router.refresh()}
       />
     </>
