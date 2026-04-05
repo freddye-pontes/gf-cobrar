@@ -50,13 +50,13 @@ def criar_devedor(payload: DevedorCreate, db: Session = Depends(get_db)):
         email=payload.email,
         score_spc=payload.score_spc,
         perfil=payload.perfil,
-        logradouro=end.logradouro,
-        numero=end.numero,
-        complemento=end.complemento,
-        bairro=end.bairro,
-        cidade=end.cidade,
-        estado=end.estado,
-        cep=end.cep,
+        logradouro=end.logradouro if end else None,
+        numero=end.numero if end else None,
+        complemento=end.complemento if end else None,
+        bairro=end.bairro if end else None,
+        cidade=end.cidade if end else None,
+        estado=end.estado if end else None,
+        cep=end.cep if end else None,
     )
     db.add(d)
     db.commit()

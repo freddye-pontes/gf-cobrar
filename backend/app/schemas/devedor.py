@@ -4,13 +4,13 @@ from typing import Optional
 
 
 class EnderecoSchema(BaseModel):
-    logradouro: str
-    numero: str
+    logradouro: Optional[str] = None
+    numero: Optional[str] = None
     complemento: Optional[str] = None
-    bairro: str
-    cidade: str
-    estado: str
-    cep: str
+    bairro: Optional[str] = None
+    cidade: Optional[str] = None
+    estado: Optional[str] = None
+    cep: Optional[str] = None
 
 
 class DevedorBase(BaseModel):
@@ -19,7 +19,7 @@ class DevedorBase(BaseModel):
     cpf_cnpj: str
     telefones: list[str] = []
     email: Optional[str] = None
-    endereco: EnderecoSchema
+    endereco: Optional[EnderecoSchema] = None
     score_spc: Optional[int] = None
     perfil: str = "varejo"          # B2B | varejo | recorrente
 
@@ -46,7 +46,7 @@ class DevedorOut(BaseModel):
     cpf_cnpj: str
     telefones: list[str]
     email: Optional[str]
-    endereco: EnderecoSchema
+    endereco: Optional[EnderecoSchema] = None
     score_spc: Optional[int]
     perfil: str
     created_at: datetime
@@ -65,13 +65,13 @@ class DevedorOut(BaseModel):
             telefones=m.telefones or [],
             email=m.email,
             endereco=EnderecoSchema(
-                logradouro=m.logradouro,
-                numero=m.numero,
-                complemento=m.complemento,
-                bairro=m.bairro,
-                cidade=m.cidade,
-                estado=m.estado,
-                cep=m.cep,
+                logradouro=m.logradouro or None,
+                numero=m.numero or None,
+                complemento=m.complemento or None,
+                bairro=m.bairro or None,
+                cidade=m.cidade or None,
+                estado=m.estado or None,
+                cep=m.cep or None,
             ),
             score_spc=m.score_spc,
             perfil=m.perfil,
