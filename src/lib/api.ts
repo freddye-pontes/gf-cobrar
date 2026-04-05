@@ -1,4 +1,4 @@
-const BASE_URL = 'https://gf-cobrar-production.up.railway.app/api/v1'
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
