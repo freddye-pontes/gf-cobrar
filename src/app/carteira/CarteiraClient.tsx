@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { formatCurrency, getTipoLabel } from '@/lib/utils'
 import { NovaDividaModal } from '@/components/modals/NovaDividaModal'
 import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
+import { ImportarPlanilhaModal } from '@/components/modals/ImportarPlanilhaModal'
 import {
   Search, Filter, Upload, ChevronRight,
   Building2, User, ArrowUpDown, Plus, UserPlus,
@@ -37,6 +38,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
   const [sortBy, setSortBy] = useState<'valor' | 'dias' | 'vencimento'>('dias')
   const [novaDividaOpen, setNovaDividaOpen] = useState(false)
   const [novoDevedorOpen, setNovoDevedorOpen] = useState(false)
+  const [importarOpen, setImportarOpen] = useState(false)
 
   const filtered = useMemo(() => {
     let result = dividas
@@ -82,7 +84,9 @@ export function CarteiraClient({ dividas, credores }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-4 py-2">
+            <button
+              onClick={() => setImportarOpen(true)}
+              className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-4 py-2">
               <Upload className="w-4 h-4" />
               <span className="hidden md:inline">Importar CSV</span>
             </button>
@@ -229,6 +233,11 @@ export function CarteiraClient({ dividas, credores }: Props) {
       <NovoDevedorModal
         open={novoDevedorOpen}
         onClose={() => setNovoDevedorOpen(false)}
+        onSuccess={() => router.refresh()}
+      />
+      <ImportarPlanilhaModal
+        open={importarOpen}
+        onClose={() => setImportarOpen(false)}
         onSuccess={() => router.refresh()}
       />
     </>

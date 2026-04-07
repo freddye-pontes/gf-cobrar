@@ -30,6 +30,7 @@ class DividaBase(BaseModel):
     data_emissao: date
     tipo: str                           # boleto | contrato | cartao | servico
     status: str = "em_aberto"
+    chave_externa: Optional[str] = None
     numero_contrato: Optional[str] = None
     acoes_recomendadas: str = ""
 
@@ -64,6 +65,7 @@ class DividaListOut(BaseModel):
     data_vencimento: date
     tipo: str
     status: str
+    chave_externa: Optional[str] = None
     numero_contrato: Optional[str]
     dias_sem_contato: int
     ultimo_contato: Optional[date]

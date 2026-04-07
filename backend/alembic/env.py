@@ -7,6 +7,13 @@ from alembic import context
 # Add backend/ to path so app imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
+# Load .env file if present (local dev)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
+except ImportError:
+    pass
+
 from app.models.base import Base
 import app.models  # noqa: F401 — ensure all models are registered
 

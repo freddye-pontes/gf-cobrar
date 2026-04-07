@@ -31,6 +31,7 @@ class Divida(Base):
     # em_aberto | em_negociacao | ptp_ativa | pago | judicial | encerrado
     status: Mapped[str] = mapped_column(String(20), default="em_aberto", index=True)
 
+    chave_externa: Mapped[Optional[str]] = mapped_column(String(100), unique=True, index=True)
     numero_contrato: Mapped[Optional[str]] = mapped_column(String(100))
     dias_sem_contato: Mapped[int] = mapped_column(Integer, default=0)
     ultimo_contato: Mapped[Optional[date]] = mapped_column(Date)
