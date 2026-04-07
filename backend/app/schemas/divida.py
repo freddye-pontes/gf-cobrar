@@ -75,6 +75,7 @@ class DividaListOut(BaseModel):
     devedor_nome: Optional[str] = None
     credor_nome: Optional[str] = None
     devedor_tipo: Optional[str] = None
+    ultimo_canal: Optional[str] = None   # canal do último contato registrado
 
 
 class DividaOut(DividaListOut):

@@ -37,6 +37,11 @@ async function put<T>(path: string, body: unknown): Promise<T> {
 
 // ── Types (API response shapes) ───────────────────────────────────────────────
 
+export interface APIKPITrend {
+  value: string
+  positive: boolean
+}
+
 export interface APIKPIs {
   total_carteira: number
   recuperado_mes: number
@@ -44,6 +49,15 @@ export interface APIKPIs {
   sem_contato_d7: number
   tarefas_hoje: number
   taxa_recuperacao: number
+  trend_recuperado: APIKPITrend | null
+  trend_carteira: APIKPITrend | null
+  ptps_quebradas_pct: number | null
+}
+
+export interface APIAgingBucket {
+  faixa: string
+  count: number
+  total: number
 }
 
 export interface APIChartPoint {
@@ -74,6 +88,7 @@ export interface APIDividaListOut {
   devedor_nome: string | null
   credor_nome: string | null
   devedor_tipo: string | null
+  ultimo_canal: string | null
 }
 
 export interface APIHistoricoContato {
@@ -167,6 +182,7 @@ export const dashboardApi = {
   kpis: () => get<APIKPIs>('/dashboard/kpis'),
   chart: () => get<APIChartPoint[]>('/dashboard/chart'),
   statusCarteira: () => get<APIStatusCarteira[]>('/dashboard/status-carteira'),
+  aging: () => get<APIAgingBucket[]>('/dashboard/aging'),
 }
 
 // ── Dividas ───────────────────────────────────────────────────────────────────

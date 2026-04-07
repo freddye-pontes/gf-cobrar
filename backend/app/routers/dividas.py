@@ -37,6 +37,9 @@ def _build_list_out(d: Divida) -> DividaListOut:
         out.devedor_tipo = d.devedor.tipo
     if d.credor:
         out.credor_nome = d.credor.razao_social
+    if d.historico:
+        ultimo = max(d.historico, key=lambda h: h.data)
+        out.ultimo_canal = ultimo.canal
     return out
 
 
@@ -62,7 +65,11 @@ def listar_dividas(
 ):
     q = (
         db.query(Divida)
-        .options(joinedload(Divida.devedor), joinedload(Divida.credor))
+        .options(
+            joinedload(Divida.devedor),
+            joinedload(Divida.credor),
+            joinedload(Divida.historico),
+        )
         .order_by(Divida.dias_sem_contato.desc(), Divida.data_vencimento)
     )
     if status_filter:
@@ -90,7 +97,11 @@ def work_queue(db: Session = Depends(get_db)):
 
     dividas = (
         db.query(Divida)
-        .options(joinedload(Divida.devedor), joinedload(Divida.credor))
+        .options(
+            joinedload(Divida.devedor),
+            joinedload(Divida.credor),
+            joinedload(Divida.historico),
+        )
         .filter(Divida.status.notin_(["pago", "encerrado", "judicial"]))
         .order_by(priority, Divida.valor_atualizado.desc())
         .limit(50)
