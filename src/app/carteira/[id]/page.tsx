@@ -10,7 +10,7 @@ import {
 import {
   ArrowLeft, Phone, Mail, MapPin, MessageSquare,
   FileText, Clock, AlertTriangle, CheckCircle2,
-  Building2, User, CalendarCheck, Gavel,
+  Building2, User, CalendarCheck, Gavel, Lock, Hash,
 } from 'lucide-react'
 import type { StatusDivida, CanalContato } from '@/lib/types'
 import { DevedorQuickActions, DividaActionButtons } from './DevedorActions'
@@ -215,6 +215,19 @@ export default async function DevedorDetailPage({
 
                     return (
                       <div key={divida.id} className="p-5">
+                        {/* Chave imutável da dívida */}
+                        <div className="flex items-center gap-1.5 mb-3 pb-3 border-b border-border-subtle">
+                          <Hash className="w-3 h-3 text-ink-muted" />
+                          <span className="font-mono text-xs font-bold text-accent-light tracking-wider">
+                            {divida.chave_divida}
+                          </span>
+                          {divida.chave_externa && (
+                            <span className="text-[10px] font-mono text-ink-muted ml-2">
+                              ref. ext: {divida.chave_externa}
+                            </span>
+                          )}
+                        </div>
+
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex items-start gap-3">
                             <div className="mt-0.5">{statusIcon[divida.status]}</div>
@@ -301,11 +314,14 @@ export default async function DevedorDetailPage({
                           divida={{ id: divida.id, status: divida.status, credorNome: divida.credor_nome ?? '' }}
                         />
 
-                        {/* History */}
+                        {/* History — append-only / immutable */}
                         <div className="mt-3">
-                          <p className="text-ink-muted text-[10px] font-mono uppercase tracking-wider mb-2">
-                            Histórico ({divida.historico.length})
-                          </p>
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Lock className="w-3 h-3 text-ink-muted" />
+                            <p className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">
+                              Histórico imutável ({divida.historico.length})
+                            </p>
+                          </div>
                           {divida.historico.length === 0 ? (
                             <p className="text-ink-disabled text-xs">Sem registros de contato.</p>
                           ) : (

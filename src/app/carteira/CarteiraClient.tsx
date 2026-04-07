@@ -199,6 +199,11 @@ export function CarteiraClient({ dividas, credores }: Props) {
                         <p className="text-ink-muted text-xs truncate md:hidden">
                           {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
                         </p>
+                        {row.chave_divida && (
+                          <p className="font-mono text-[10px] text-ink-disabled mt-0.5 truncate">
+                            {row.chave_divida}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 md:contents shrink-0 ml-2">

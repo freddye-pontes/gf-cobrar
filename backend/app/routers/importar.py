@@ -280,6 +280,7 @@ async def executar_importacao(
             divida = Divida(
                 devedor_id=devedor.id,
                 credor_id=credor.id,
+                chave_divida="TMP",
                 chave_externa=chave,
                 valor_original=valor_orig,
                 valor_atualizado=valor_atu,
@@ -293,12 +294,16 @@ async def executar_importacao(
             db.add(divida)
             db.flush()
 
+            # Generate immutable internal key
+            chave_interna = f"GFD-{date.today().strftime('%Y%m%d')}-{divida.id:06d}"
+            divida.chave_divida = chave_interna
+
             # Registro imutável de criação no histórico
             h = HistoricoContato(
                 divida_id=divida.id,
                 data=date.today(),
                 canal="sistema",
-                resultado=f"Dívida importada via planilha. Chave externa: {chave or 'N/A'}",
+                resultado=f"Dívida importada via planilha. Chave: {chave_interna}" + (f" | Ref. externa: {chave}" if chave else ""),
                 operador_nome="Sistema",
             )
             db.add(h)

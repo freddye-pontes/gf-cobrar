@@ -58,6 +58,7 @@ class DividaListOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    chave_divida: str = ""
     devedor_id: int
     credor_id: int
     valor_original: float
@@ -75,7 +76,7 @@ class DividaListOut(BaseModel):
     devedor_nome: Optional[str] = None
     credor_nome: Optional[str] = None
     devedor_tipo: Optional[str] = None
-    ultimo_canal: Optional[str] = None   # canal do último contato registrado
+    ultimo_canal: Optional[str] = None
 
 
 class DividaOut(DividaListOut):

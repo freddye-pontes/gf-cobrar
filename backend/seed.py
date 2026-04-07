@@ -238,8 +238,13 @@ def run():
                    ultimo_contato=d(25), acoes_recomendadas="Agrupar contato com divida do Banco",
                    numero_contrato=None),
         ]
-        db.add_all(dividas)
-        db.flush()
+        # Insert one by one to get sequential ids before generating keys
+        for dv in dividas:
+            dv.chave_divida = "PLACEHOLDER"
+            db.add(dv)
+            db.flush()
+            dv.chave_divida = f"GFD-{TODAY.strftime('%Y%m%d')}-{dv.id:06d}"
+            db.flush()
 
         dv_joao_banco, dv_maria_agil, dv_roberto_tel, dv_patricia_banco, \
         dv_andre_agil, dv_tech_dist, dv_const_banco, dv_fernanda_tel, \

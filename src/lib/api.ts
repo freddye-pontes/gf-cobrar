@@ -74,6 +74,7 @@ export interface APIStatusCarteira {
 
 export interface APIDividaListOut {
   id: number
+  chave_divida: string
   devedor_id: number
   credor_id: number
   valor_original: number

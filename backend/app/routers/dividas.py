@@ -136,16 +136,19 @@ def criar_divida(payload: DividaCreate, db: Session = Depends(get_db)):
     if not credor:
         raise HTTPException(status_code=404, detail="Credor não encontrado")
 
-    d = Divida(**payload.model_dump())
+    d = Divida(**payload.model_dump(), chave_divida="TMP")
     db.add(d)
-    db.flush()
+    db.flush()  # get d.id
 
-    # Auto-add system history record
+    # Generate immutable internal key: GFD-YYYYMMDD-000001
+    d.chave_divida = f"GFD-{date.today().strftime('%Y%m%d')}-{d.id:06d}"
+
+    # Immutable history record — creation event
     h = HistoricoContato(
         divida_id=d.id,
         data=date.today(),
         canal="sistema",
-        resultado="Dívida importada ao sistema",
+        resultado=f"Dívida criada no sistema. Chave: GFD-{date.today().strftime('%Y%m%d')}-{d.id:06d}",
     )
     db.add(h)
     db.commit()
