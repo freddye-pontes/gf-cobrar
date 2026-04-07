@@ -186,46 +186,52 @@ export function CarteiraClient({ dividas, credores }: Props) {
                 <Link key={row.id} href={`/carteira/${row.devedor_id}`}
                   className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_100px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
                 >
-                  {/* Mobile card layout */}
-                  <div className="flex items-center justify-between md:contents">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-6 h-6 rounded-md bg-elevated border border-border-default flex items-center justify-center shrink-0">
-                        {row.devedor_tipo === 'PJ' ? <Building2 className="w-3 h-3 text-ink-muted" /> : <User className="w-3 h-3 text-ink-muted" />}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-ink-primary text-sm font-medium truncate group-hover:text-accent-light transition-colors">
-                          {row.devedor_nome ?? `Devedor #${row.devedor_id}`}
-                        </p>
-                        <p className="text-ink-muted text-xs truncate md:hidden">
-                          {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
-                        </p>
-                        {row.chave_divida && (
-                          <p className="font-mono text-[10px] text-accent/60 mt-0.5 truncate md:hidden">
-                            {row.chave_divida}
-                          </p>
-                        )}
-                      </div>
+                  {/* Col 1 — Devedor (mobile: card completo, desktop: só nome) */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-6 h-6 rounded-md bg-elevated border border-border-default flex items-center justify-center shrink-0">
+                      {row.devedor_tipo === 'PJ' ? <Building2 className="w-3 h-3 text-ink-muted" /> : <User className="w-3 h-3 text-ink-muted" />}
                     </div>
-                    <div className="flex items-center gap-2 md:contents shrink-0 ml-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-ink-primary text-sm font-medium truncate group-hover:text-accent-light transition-colors">
+                        {row.devedor_nome ?? `Devedor #${row.devedor_id}`}
+                      </p>
+                      {/* Mobile-only subtitle */}
+                      <p className="text-ink-muted text-xs truncate md:hidden">
+                        {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
+                      </p>
+                      {row.chave_divida && (
+                        <p className="font-mono text-[10px] text-accent/60 mt-0.5 truncate md:hidden">
+                          {row.chave_divida}
+                        </p>
+                      )}
+                    </div>
+                    {/* Mobile-only status + chevron */}
+                    <div className="flex items-center gap-2 md:hidden shrink-0 ml-auto">
                       <StatusBadge status={row.status as StatusDivida} size="sm" />
-                      <ChevronRight className="w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-ink-disabled" />
                     </div>
                   </div>
-                  {/* Desktop-only columns */}
-                  <span className="hidden md:flex items-center gap-1">
+                  {/* Col 2 — Chave (desktop only) */}
+                  <span className="hidden md:flex items-center">
                     <span className="font-mono text-[11px] font-semibold text-accent-light bg-accent/10 border border-accent/20 rounded px-1.5 py-0.5 truncate">
                       {row.chave_divida}
                     </span>
                   </span>
+                  {/* Col 3 — Credor */}
                   <span className="hidden md:block text-ink-secondary text-xs truncate">
                     {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')}
                   </span>
+                  {/* Col 4 — Tipo */}
                   <span className="hidden md:block text-ink-muted text-xs font-mono">{getTipoLabel(row.tipo as any)}</span>
+                  {/* Col 5 — Valor */}
                   <span className="hidden md:block font-mono text-sm font-medium text-ink-primary">{formatCurrency(row.valor_atualizado)}</span>
+                  {/* Col 6 — Status */}
                   <span className="hidden md:block"><StatusBadge status={row.status as StatusDivida} size="sm" /></span>
+                  {/* Col 7 — Dias */}
                   <span className="hidden md:block font-mono text-xs font-bold" style={{ color: row.dias_sem_contato >= 7 ? '#ef4444' : row.dias_sem_contato >= 3 ? '#f59e0b' : '#7a9bc8' }}>
                     {row.dias_sem_contato}d
                   </span>
+                  {/* Col 8 — Chevron */}
                   <ChevronRight className="hidden md:block w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
                 </Link>
               ))
