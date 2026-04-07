@@ -132,11 +132,11 @@ export function NegociacaoClient({ negociacoes }: Props) {
                       <div className="flex items-start gap-2 shrink-0">
                         <div className="text-right">
                           <p className="font-mono font-bold text-ink-primary text-sm md:text-base">{formatCurrency(neg.valor_oferta)}</p>
-                          {neg.desconto_percentual && (
+                          {!!neg.desconto_percentual && (
                             <p className="font-mono text-xs text-emerald">-{neg.desconto_percentual.toFixed(1)}% desconto</p>
                           )}
-                          {neg.numero_parcelas && (
-                            <p className="font-mono text-xs text-ink-muted">{neg.numero_parcelas}x {formatCurrency(neg.valor_parcela ?? 0)}</p>
+                          {!!neg.numero_parcelas && (
+                            <p className="font-mono text-xs text-ink-secondary">{neg.numero_parcelas}x {formatCurrency(neg.valor_parcela ?? 0)}</p>
                           )}
                           {neg.data_promessa && (
                             <p className="font-mono text-xs text-amber">PTP: {formatDate(neg.data_promessa)}</p>
