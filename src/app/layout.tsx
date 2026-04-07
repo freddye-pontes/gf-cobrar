@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'GF Cobrar — Sistema de Gestão de Cobrança',
+  title: 'GF Recebíveis — Sistema de Gestão de Cobrança',
   description: 'Plataforma B2B de gestão de cobrança multi-credor',
 }
 

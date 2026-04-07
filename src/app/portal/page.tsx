@@ -123,7 +123,7 @@ export default function PortalPage() {
           </div>
 
           <p className="text-center text-ink-disabled text-xs mt-4 font-mono">
-            GF Cobrar — Portal Externo · LGPD Compliant
+            GF Recebíveis — Portal Externo · LGPD Compliant
           </p>
         </div>
       </div>
@@ -314,7 +314,7 @@ export default function PortalPage() {
       </div>
 
       <div className="text-center py-6">
-        <p className="text-[10px] font-mono text-ink-disabled">GF Cobrar — Portal Externo · LGPD Compliant</p>
+        <p className="text-[10px] font-mono text-ink-disabled">GF Recebíveis — Portal Externo · LGPD Compliant</p>
       </div>
     </div>
   )

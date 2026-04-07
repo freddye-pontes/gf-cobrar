@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # CORS — pode ser string JSON ou lista
     CORS_ORIGINS: str = '["http://localhost:3000"]'
 
-    APP_NAME: str = "GF Cobrar API"
+    APP_NAME: str = "GF Recebíveis API"
     APP_VERSION: str = "1.0.0"
     API_PREFIX: str = "/api/v1"
     ENVIRONMENT: str = "production"

@@ -46,7 +46,7 @@ export function Sidebar() {
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <div className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">
-              GF Cobrar
+              GF Recebíveis
             </div>
             <div className="font-mono text-ink-muted text-[10px] tracking-wider mt-0.5">
               MVP · v1.0
@@ -165,7 +165,7 @@ export function Sidebar() {
           <div className="flex items-center justify-center w-6 h-6 rounded bg-accent">
             <Activity className="w-3 h-3 text-white" strokeWidth={2.5} />
           </div>
-          <span className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">GF Cobrar</span>
+          <span className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">GF Recebíveis</span>
         </div>
       </div>
 
