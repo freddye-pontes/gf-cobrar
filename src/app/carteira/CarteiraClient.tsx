@@ -170,8 +170,8 @@ export function CarteiraClient({ dividas, credores }: Props) {
         {/* Table — desktop / Cards — mobile */}
         <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
           {/* Desktop header */}
-          <div className="hidden md:grid grid-cols-[1fr_140px_100px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
-            {['Devedor', 'Credor', 'Tipo', 'Valor Atual', 'Status', 'Dias', ''].map((h) => (
+          <div className="hidden md:grid grid-cols-[1fr_130px_140px_100px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
+            {['Devedor', 'Chave', 'Credor', 'Tipo', 'Valor Atual', 'Status', 'Dias', ''].map((h) => (
               <span key={h} className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">{h}</span>
             ))}
           </div>
@@ -184,7 +184,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
             ) : (
               filtered.map((row) => (
                 <Link key={row.id} href={`/carteira/${row.devedor_id}`}
-                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_140px_100px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
+                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_100px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
                 >
                   {/* Mobile card layout */}
                   <div className="flex items-center justify-between md:contents">
@@ -200,7 +200,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
                           {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
                         </p>
                         {row.chave_divida && (
-                          <p className="font-mono text-[10px] text-ink-disabled mt-0.5 truncate">
+                          <p className="font-mono text-[10px] text-accent/60 mt-0.5 truncate md:hidden">
                             {row.chave_divida}
                           </p>
                         )}
@@ -212,6 +212,11 @@ export function CarteiraClient({ dividas, credores }: Props) {
                     </div>
                   </div>
                   {/* Desktop-only columns */}
+                  <span className="hidden md:flex items-center gap-1">
+                    <span className="font-mono text-[11px] font-semibold text-accent-light bg-accent/10 border border-accent/20 rounded px-1.5 py-0.5 truncate">
+                      {row.chave_divida}
+                    </span>
+                  </span>
                   <span className="hidden md:block text-ink-secondary text-xs truncate">
                     {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')}
                   </span>
