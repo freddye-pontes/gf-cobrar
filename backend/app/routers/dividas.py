@@ -11,6 +11,29 @@ from app.schemas.divida import (
 
 router = APIRouter(prefix="/dividas", tags=["dividas"])
 
+
+def _calcular_aging(data_vencimento: date) -> tuple[int, str, float]:
+    """Returns (dias_atraso, faixa_aging, comissao_sugerida).
+
+    Aging buckets:
+      ≤ 0 days   → em_dia   →  0%
+      1–30 days  → baixa    → 10%
+      31–90 days → media    → 15%
+      91–180days → alta     → 25%
+      > 180 days → critica  → 30%
+    """
+    dias = (date.today() - data_vencimento).days
+    if dias <= 0:
+        return 0, "em_dia", 0.0
+    elif dias <= 30:
+        return dias, "baixa", 10.0
+    elif dias <= 90:
+        return dias, "media", 15.0
+    elif dias <= 180:
+        return dias, "alta", 25.0
+    else:
+        return dias, "critica", 30.0
+
 STATUS_TRANSITIONS = {
     "em_aberto": ["em_negociacao", "ptp_ativa", "pago", "judicial", "encerrado"],
     "em_negociacao": ["em_aberto", "ptp_ativa", "pago", "judicial", "encerrado"],
@@ -40,6 +63,7 @@ def _build_list_out(d: Divida) -> DividaListOut:
     if d.historico:
         ultimo = max(d.historico, key=lambda h: h.data)
         out.ultimo_canal = ultimo.canal
+    out.dias_atraso, out.faixa_aging, out.comissao_sugerida = _calcular_aging(d.data_vencimento)
     return out
 
 

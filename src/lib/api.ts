@@ -91,6 +91,9 @@ export interface APIDividaListOut {
   credor_nome: string | null
   devedor_tipo: string | null
   ultimo_canal: string | null
+  dias_atraso: number
+  faixa_aging: 'em_dia' | 'baixa' | 'media' | 'alta' | 'critica'
+  comissao_sugerida: number
 }
 
 export interface APIHistoricoContato {

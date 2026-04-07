@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { formatCurrency, getTipoLabel } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { NovaDividaModal } from '@/components/modals/NovaDividaModal'
 import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
 import { ImportarPlanilhaModal } from '@/components/modals/ImportarPlanilhaModal'
@@ -170,8 +170,8 @@ export function CarteiraClient({ dividas, credores }: Props) {
         {/* Table — desktop / Cards — mobile */}
         <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
           {/* Desktop header */}
-          <div className="hidden md:grid grid-cols-[1fr_130px_140px_100px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
-            {['Devedor', 'Chave', 'Credor', 'Tipo', 'Valor Atual', 'Status', 'Dias', ''].map((h) => (
+          <div className="hidden md:grid grid-cols-[1fr_130px_140px_110px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
+            {['Devedor', 'Chave', 'Credor', 'Aging', 'Valor Atual', 'Status', 'Dias', ''].map((h) => (
               <span key={h} className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">{h}</span>
             ))}
           </div>
@@ -184,7 +184,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
             ) : (
               filtered.map((row) => (
                 <Link key={row.id} href={`/carteira/${row.devedor_id}`}
-                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_100px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
+                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_110px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
                 >
                   {/* Col 1 — Devedor (mobile: card completo, desktop: só nome) */}
                   <div className="flex items-center gap-2 min-w-0">
@@ -213,7 +213,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
                   </div>
                   {/* Col 2 — Chave (desktop only) */}
                   <span className="hidden md:flex items-center">
-                    <span className="font-mono text-[11px] font-semibold text-accent-light bg-accent/10 border border-accent/20 rounded px-1.5 py-0.5 truncate">
+                    <span className="font-mono text-[11px] font-semibold text-white bg-accent/10 border border-accent/20 rounded px-1.5 py-0.5 truncate">
                       {row.chave_divida}
                     </span>
                   </span>
@@ -221,8 +221,26 @@ export function CarteiraClient({ dividas, credores }: Props) {
                   <span className="hidden md:block text-ink-secondary text-xs truncate">
                     {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')}
                   </span>
-                  {/* Col 4 — Tipo */}
-                  <span className="hidden md:block text-ink-muted text-xs font-mono">{getTipoLabel(row.tipo as any)}</span>
+                  {/* Col 4 — Aging */}
+                  <span className="hidden md:flex flex-col gap-0.5">
+                    <span className={`text-[10px] font-semibold font-mono uppercase tracking-wide ${
+                      row.faixa_aging === 'critica' ? 'text-red-400' :
+                      row.faixa_aging === 'alta'    ? 'text-orange-400' :
+                      row.faixa_aging === 'media'   ? 'text-yellow-400' :
+                      row.faixa_aging === 'baixa'   ? 'text-green-400' :
+                      'text-ink-muted'
+                    }`}>
+                      {row.faixa_aging === 'critica' ? 'Crítica' :
+                       row.faixa_aging === 'alta'    ? 'Alta' :
+                       row.faixa_aging === 'media'   ? 'Média' :
+                       row.faixa_aging === 'baixa'   ? 'Baixa' : 'Em dia'}
+                    </span>
+                    {row.faixa_aging !== 'em_dia' && (
+                      <span className="text-[10px] text-ink-muted font-mono">
+                        {row.dias_atraso}d · {row.comissao_sugerida}%
+                      </span>
+                    )}
+                  </span>
                   {/* Col 5 — Valor */}
                   <span className="hidden md:block font-mono text-sm font-medium text-ink-primary">{formatCurrency(row.valor_atualizado)}</span>
                   {/* Col 6 — Status */}

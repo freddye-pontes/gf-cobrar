@@ -78,6 +78,11 @@ class DividaListOut(BaseModel):
     devedor_tipo: Optional[str] = None
     ultimo_canal: Optional[str] = None
 
+    # Aging (calculated in router)
+    dias_atraso: int = 0
+    faixa_aging: str = "em_dia"        # em_dia | baixa | media | alta | critica
+    comissao_sugerida: float = 0.0
+
 
 class DividaOut(DividaListOut):
     """Full view with history."""
