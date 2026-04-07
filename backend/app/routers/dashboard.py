@@ -38,7 +38,9 @@ class ChartPoint(BaseModel):
 
 
 class AgingBucket(BaseModel):
-    faixa: str          # "0-30d", "31-60d", "61-90d", "+90d"
+    faixa: str          # "1-30d", "31-90d", "91-180d", "+180d"
+    label: str          # "Baixa", "Média", "Alta", "Crítica"
+    comissao: float     # 10, 15, 25, 30
     count: int
     total: float
 
@@ -198,28 +200,40 @@ def status_carteira(db: Session = Depends(get_db)):
 
 @router.get("/aging", response_model=list[AgingBucket])
 def get_aging(db: Session = Depends(get_db)):
-    """Debt aging distribution — how overdue are the open debts?"""
+    """Debt aging by days overdue (data_vencimento vs today)."""
+    hoje = date.today()
+
+    # (faixa_label, label, comissao_pct, min_days_overdue, max_days_overdue)
     buckets = [
-        ("0-30d",  0,  30),
-        ("31-60d", 31, 60),
-        ("61-90d", 61, 90),
-        ("+90d",   91, 99999),
+        ("1-30d",   "Baixa",   10.0,  1,   30),
+        ("31-90d",  "Média",   15.0,  31,  90),
+        ("91-180d", "Alta",    25.0,  91,  180),
+        ("+180d",   "Crítica", 30.0,  181, 99999),
     ]
 
     result = []
-    for faixa, min_d, max_d in buckets:
+    for faixa, label, comissao, min_d, max_d in buckets:
+        # Convert day range to vencimento date range:
+        # dias_vencido = hoje - data_vencimento
+        # min_d <= dias_vencido → data_vencimento <= hoje - min_d
+        # dias_vencido <= max_d → data_vencimento >= hoje - max_d
+        max_venc = hoje - timedelta(days=min_d)
         q = db.query(
             func.count(Divida.id).label("count"),
             func.coalesce(func.sum(Divida.valor_atualizado), 0).label("total"),
         ).filter(
             Divida.status.notin_(["pago", "encerrado"]),
-            Divida.dias_sem_contato >= min_d,
+            Divida.data_vencimento <= max_venc,
         )
         if max_d < 99999:
-            q = q.filter(Divida.dias_sem_contato <= max_d)
+            min_venc = hoje - timedelta(days=max_d)
+            q = q.filter(Divida.data_vencimento >= min_venc)
+
         row = q.first()
         result.append(AgingBucket(
             faixa=faixa,
+            label=label,
+            comissao=comissao,
             count=row.count if row else 0,
             total=float(row.total) if row else 0.0,
         ))

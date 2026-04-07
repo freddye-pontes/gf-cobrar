@@ -170,8 +170,8 @@ export function CarteiraClient({ dividas, credores }: Props) {
         {/* Table — desktop / Cards — mobile */}
         <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
           {/* Desktop header */}
-          <div className="hidden md:grid grid-cols-[1fr_130px_140px_110px_120px_80px_60px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
-            {['Devedor', 'Chave', 'Credor', 'Aging', 'Valor Atual', 'Status', 'Dias', ''].map((h) => (
+          <div className="hidden md:grid grid-cols-[1fr_130px_140px_110px_120px_80px_36px] gap-3 px-5 py-3 border-b border-border-subtle bg-elevated/50">
+            {['Devedor', 'Chave', 'Credor', 'Aging', 'Valor Atual', 'Status', ''].map((h) => (
               <span key={h} className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">{h}</span>
             ))}
           </div>
@@ -184,7 +184,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
             ) : (
               filtered.map((row) => (
                 <Link key={row.id} href={`/carteira/${row.devedor_id}`}
-                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_110px_120px_80px_60px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
+                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_110px_120px_80px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
                 >
                   {/* Col 1 — Devedor (mobile: card completo, desktop: só nome) */}
                   <div className="flex items-center gap-2 min-w-0">
@@ -245,11 +245,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
                   <span className="hidden md:block font-mono text-sm font-medium text-ink-primary">{formatCurrency(row.valor_atualizado)}</span>
                   {/* Col 6 — Status */}
                   <span className="hidden md:block"><StatusBadge status={row.status as StatusDivida} size="sm" /></span>
-                  {/* Col 7 — Dias */}
-                  <span className="hidden md:block font-mono text-xs font-bold" style={{ color: row.dias_sem_contato >= 7 ? '#ef4444' : row.dias_sem_contato >= 3 ? '#f59e0b' : '#7a9bc8' }}>
-                    {row.dias_sem_contato}d
-                  </span>
-                  {/* Col 8 — Chevron */}
+                  {/* Col 7 — Chevron */}
                   <ChevronRight className="hidden md:block w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
                 </Link>
               ))

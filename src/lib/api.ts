@@ -56,6 +56,8 @@ export interface APIKPIs {
 
 export interface APIAgingBucket {
   faixa: string
+  label: string
+  comissao: number
   count: number
   total: number
 }

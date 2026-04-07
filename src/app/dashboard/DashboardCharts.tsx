@@ -83,37 +83,45 @@ export function DashboardCharts({ chartData, statusCarteira, agingData, ptpsQueb
       {/* ── Aging da Dívida ────────────────────────────────────────────────────── */}
       <div className="bg-surface border border-border-subtle rounded-xl p-5 animate-fade-up" style={{ animationDelay: '330ms', opacity: 0 }}>
         <div className="mb-4">
-          <h3 className="font-display font-semibold text-ink-primary text-sm">Envelhecimento da Dívida</h3>
-          <p className="text-ink-muted text-xs mt-0.5">Distribuição por dias sem contato</p>
+          <h3 className="font-display font-semibold text-ink-primary text-sm">Aging da Carteira</h3>
+          <p className="text-ink-muted text-xs mt-0.5">Distribuição por dias vencidos</p>
         </div>
         {agingData.every((b) => b.count === 0) ? (
-          <p className="text-ink-muted text-xs py-4 text-center">Sem dívidas ativas.</p>
+          <p className="text-ink-muted text-xs py-4 text-center">Sem dívidas vencidas.</p>
         ) : (
           <>
-            <ResponsiveContainer width="100%" height={100}>
-              <BarChart data={agingData} margin={{ top: 2, right: 4, left: -28, bottom: 0 }} barSize={28}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a2d50" vertical={false} />
-                <XAxis dataKey="faixa" tick={{ fill: '#3d5580', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-                  axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#3d5580', fontSize: 9, fontFamily: 'JetBrains Mono' }}
-                  axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={tooltipStyle}
-                  formatter={(value: number, _name: string, props: any) => [
-                    `${value} dívidas · ${formatCurrencyCompact(props.payload.total)}`,
-                    'Aging',
-                  ]} />
-                <Bar dataKey="count" radius={[3, 3, 0, 0]}>
-                  {agingData.map((_entry, i) => (
-                    <Cell key={i} fill={AGING_COLORS[i]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="flex gap-3 mt-2 flex-wrap">
+            {/* Barra de proporção */}
+            {(() => {
+              const grandTotal = agingData.reduce((s, b) => s + b.total, 0)
+              return grandTotal > 0 ? (
+                <div className="flex h-2 rounded-full overflow-hidden mb-4 gap-px">
+                  {agingData.map((b, i) => {
+                    const pct = grandTotal > 0 ? (b.total / grandTotal) * 100 : 0
+                    return pct > 0 ? (
+                      <div key={b.faixa} style={{ width: `${pct}%`, background: AGING_COLORS[i] }} />
+                    ) : null
+                  })}
+                </div>
+              ) : null
+            })()}
+
+            {/* Cards por faixa */}
+            <div className="grid grid-cols-2 gap-2">
               {agingData.map((b, i) => (
-                <div key={b.faixa} className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-sm shrink-0" style={{ background: AGING_COLORS[i] }} />
-                  <span className="text-[10px] font-mono text-ink-muted">{b.faixa}: {b.count}</span>
+                <div key={b.faixa} className="rounded-lg p-3 border"
+                  style={{ borderColor: `${AGING_COLORS[i]}30`, background: `${AGING_COLORS[i]}0a` }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wide"
+                      style={{ color: AGING_COLORS[i] }}>{b.label}</span>
+                    <span className="text-[10px] font-mono text-ink-muted">{b.faixa}</span>
+                  </div>
+                  <p className="font-mono font-bold text-sm text-ink-primary">{formatCurrencyCompact(b.total)}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-ink-muted font-mono">{b.count} dív.</span>
+                    <span className="text-[10px] font-mono font-semibold" style={{ color: AGING_COLORS[i] }}>
+                      {b.comissao}{i === 3 ? '-50' : ''}%
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
