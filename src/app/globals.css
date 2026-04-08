@@ -18,17 +18,17 @@ html {
 }
 
 body {
-  background-color: #040911;
-  color: #dce8fc;
+  background-color: #0f0f0f;
+  color: #f0f0f0;
   font-family: 'DM Sans', sans-serif;
   min-height: 100vh;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #070e1c; }
-::-webkit-scrollbar-thumb { background: #1e3566; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2a4a88; }
+::-webkit-scrollbar-track { background: #141414; }
+::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
 
 /* Animated stagger utilities */
 .stagger-1 { animation-delay: 0.05s; opacity: 0; }
@@ -67,7 +67,7 @@ body {
 
 /* Table rows */
 .table-row-hover:hover {
-  background: rgba(17, 31, 61, 0.7);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* Priority border indicators */
@@ -77,7 +77,7 @@ body {
 
 /* Shimmer loading */
 .shimmer-bg {
-  background: linear-gradient(90deg, #0c1628 25%, #111f3d 50%, #0c1628 75%);
+  background: linear-gradient(90deg, #181818 25%, #222222 50%, #181818 75%);
   background-size: 400px 100%;
   animation: shimmer 1.5s infinite;
 }
