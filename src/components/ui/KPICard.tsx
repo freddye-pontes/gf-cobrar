@@ -1,5 +1,3 @@
-'use client'
-
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
