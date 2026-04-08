@@ -165,17 +165,26 @@ export default function PortalPage() {
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
           {[
-            { label: 'Total em Carteira', value: formatCurrencyCompact(credor?.total_carteira ?? 0), Icon: DollarSign, color: '#3b82f6' },
-            { label: 'Total Recuperado', value: formatCurrencyCompact(credor?.total_recuperado ?? 0), Icon: CheckCircle2, color: '#34d399' },
-            { label: 'Taxa de Recuperação', value: `${taxaRecuperacao}%`, Icon: Percent, color: '#fbbf24' },
-            { label: 'Dívidas na Carteira', value: String(dividas.length), Icon: BarChart2, color: '#a78bfa' },
+            { label: 'Total em Carteira', value: formatCurrencyCompact(credor?.total_carteira ?? 0), Icon: DollarSign, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)'  },
+            { label: 'Total Recuperado',  value: formatCurrencyCompact(credor?.total_recuperado ?? 0), Icon: CheckCircle2, color: '#34d399', bg: 'rgba(16,185,129,0.08)' },
+            { label: 'Taxa de Recuperação', value: `${taxaRecuperacao}%`, Icon: Percent, color: '#fbbf24', bg: 'rgba(245,158,11,0.08)' },
+            { label: 'Dívidas na Carteira', value: String(dividas.length), Icon: BarChart2, color: '#a78bfa', bg: 'rgba(139,92,246,0.08)' },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-surface border border-border-subtle rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <kpi.Icon className="w-4 h-4" style={{ color: kpi.color }} />
-                <p className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">{kpi.label}</p>
+            <div key={kpi.label}
+              className="relative overflow-hidden rounded-xl p-4 border transition-all duration-200 hover:brightness-110 cursor-default"
+              style={{ background: `linear-gradient(135deg, ${kpi.bg} 0%, #1a1a1a 100%)`, borderColor: kpi.bg.replace('0.08','0.25') }}
+            >
+              <div className="absolute -top-5 -right-5 w-20 h-20 rounded-full blur-2xl opacity-20 pointer-events-none" style={{ background: kpi.color }} />
+              <div className="flex items-start justify-between gap-2 mb-3 relative z-10">
+                <p className="text-[10.5px] text-ink-muted font-mono uppercase tracking-wider leading-tight">{kpi.label}</p>
+                <span className="p-1.5 rounded-lg flex-shrink-0" style={{ background: kpi.bg.replace('0.08','0.15'), color: kpi.color }}>
+                  <kpi.Icon className="w-3.5 h-3.5" />
+                </span>
               </div>
-              <p className="font-display font-bold text-xl" style={{ color: kpi.color }}>{kpi.value}</p>
+              <p className="font-bold leading-none relative z-10"
+                style={{ color: kpi.color, fontSize: kpi.value.length > 9 ? '1.2rem' : '1.4rem' }}>
+                {kpi.value}
+              </p>
             </div>
           ))}
         </div>
