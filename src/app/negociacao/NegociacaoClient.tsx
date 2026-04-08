@@ -69,17 +69,30 @@ export function NegociacaoClient({ negociacoes }: Props) {
               const cfg = statusConfig[s]
               const count = negociacoes.filter((n) => n.status === s).length
               const total = negociacoes.filter((n) => n.status === s).reduce((acc, n) => acc + n.valor_oferta, 0)
+              const isActive = statusFilter === s
               return (
                 <button key={s} onClick={() => setStatusFilter(statusFilter === s ? '' : s)}
-                  className="bg-surface border rounded-xl p-4 text-left transition-all hover:bg-elevated"
-                  style={{ borderColor: statusFilter === s ? cfg.border : 'rgba(26,45,80,1)', background: statusFilter === s ? cfg.bg : undefined }}
+                  className="relative overflow-hidden rounded-xl p-4 text-left transition-all duration-200 hover:brightness-110 border"
+                  style={{
+                    background: `linear-gradient(135deg, ${cfg.bg} 0%, #1a1a1a 100%)`,
+                    borderColor: isActive ? cfg.border : 'rgba(45,45,45,0.8)',
+                    boxShadow: isActive ? `0 0 20px ${cfg.bg}` : 'none',
+                  }}
                 >
-                  <div className="flex items-center gap-2 mb-2" style={{ color: cfg.color }}>
-                    {cfg.icon}
-                    <span className="text-xs font-mono uppercase tracking-wider">{cfg.label}</span>
+                  {/* Glow decorativo */}
+                  <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full blur-2xl opacity-30 pointer-events-none"
+                    style={{ background: cfg.color }} />
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-2 mb-3 relative z-10">
+                    <span className="text-[10.5px] font-mono uppercase tracking-wider" style={{ color: cfg.color }}>
+                      {cfg.label}
+                    </span>
+                    <span className="p-1.5 rounded-lg" style={{ background: cfg.bg, color: cfg.color }}>
+                      {cfg.icon}
+                    </span>
                   </div>
-                  <p className="font-display font-bold text-2xl" style={{ color: cfg.color }}>{count}</p>
-                  <p className="text-ink-muted text-xs mt-0.5">{formatCurrency(total)}</p>
+                  <p className="font-bold text-[1.4rem] leading-none relative z-10" style={{ color: cfg.color }}>{count}</p>
+                  <p className="text-ink-muted text-[10.5px] mt-1.5 relative z-10">{formatCurrency(total)}</p>
                 </button>
               )
             })}
