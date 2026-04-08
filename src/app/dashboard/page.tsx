@@ -60,8 +60,8 @@ export default async function DashboardPage() {
               value={formatCurrencyCompact(kpis?.total_carteira ?? 0)}
               icon={DollarSign}
               sublabel="carteira ativa"
-              accentColor="blue"
-              trend={kpis?.trend_carteira ?? undefined}
+              variant="blue"
+              trend={kpis?.trend_carteira ? { value: kpis.trend_carteira.value, positive: kpis.trend_carteira.positive } : undefined}
               animDelay="0ms"
             />
             <KPICard
@@ -69,8 +69,8 @@ export default async function DashboardPage() {
               value={formatCurrencyCompact(kpis?.recuperado_mes ?? 0)}
               icon={TrendingUp}
               sublabel={`${kpis?.taxa_recuperacao ?? 0}% da carteira`}
-              accentColor="emerald"
-              trend={kpis?.trend_recuperado ?? undefined}
+              variant="emerald"
+              trend={kpis?.trend_recuperado ? { value: kpis.trend_recuperado.value, positive: kpis.trend_recuperado.positive } : undefined}
               animDelay="50ms"
             />
             <KPICard
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
                   ? `${kpis.ptps_quebradas_pct}% índice de quebra`
                   : 'Promessas de pagamento'
               }
-              accentColor="violet"
+              variant="violet"
               animDelay="100ms"
             />
             <KPICard
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
               value={String(kpis?.sem_contato_d7 ?? 0)}
               icon={AlertTriangle}
               sublabel="Atenção imediata"
-              accentColor="danger"
+              variant="danger"
               animDelay="150ms"
             />
             <KPICard
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
               value={String(kpis?.tarefas_hoje ?? 0)}
               icon={CheckSquare}
               sublabel="Na fila priorizada"
-              accentColor="amber"
+              variant="amber"
               animDelay="200ms"
             />
           </div>
