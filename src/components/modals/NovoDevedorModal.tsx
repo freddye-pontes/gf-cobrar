@@ -283,10 +283,12 @@ export function NovoDevedorModal({ open, onClose, onSuccess, devedor }: Props) {
                   )}
                 </div>
               </FormField>
-              <FormField label="Logradouro" className="col-span-2">
-                <input type="text" value={logradouro} onChange={(e) => setLogradouro(e.target.value)}
-                  placeholder="Rua, Av..." className={inputCls} />
-              </FormField>
+              <div className="col-span-2">
+                <FormField label="Logradouro">
+                  <input type="text" value={logradouro} onChange={(e) => setLogradouro(e.target.value)}
+                    placeholder="Rua, Av..." className={inputCls} />
+                </FormField>
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <FormField label="Número">
