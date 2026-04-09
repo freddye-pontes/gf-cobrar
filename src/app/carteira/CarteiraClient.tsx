@@ -10,7 +10,7 @@ import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
 import { ImportarPlanilhaModal } from '@/components/modals/ImportarPlanilhaModal'
 import {
   Search, Filter, Upload, ChevronRight,
-  Building2, User, ArrowUpDown, Plus, UserPlus,
+  Building2, User, ArrowUpDown, Plus, UserPlus, X, Calendar,
 } from 'lucide-react'
 import type { APIDividaListOut, APICredorOut } from '@/lib/api'
 import type { StatusDivida } from '@/lib/types'
@@ -35,7 +35,17 @@ export function CarteiraClient({ dividas, credores }: Props) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'' | StatusDivida>('')
   const [credorFilter, setCredorFilter] = useState('')
+  const [agingFilter, setAgingFilter] = useState<'' | 'baixa' | 'media' | 'alta' | 'critica'>('')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [sortBy, setSortBy] = useState<'valor' | 'dias' | 'vencimento'>('dias')
+
+  const hasActiveFilters = !!(search || statusFilter || credorFilter || agingFilter || dataInicio || dataFim)
+
+  function clearFilters() {
+    setSearch(''); setStatusFilter(''); setCredorFilter('')
+    setAgingFilter(''); setDataInicio(''); setDataFim('')
+  }
   const [novaDividaOpen, setNovaDividaOpen] = useState(false)
   const [novoDevedorOpen, setNovoDevedorOpen] = useState(false)
   const [importarOpen, setImportarOpen] = useState(false)
@@ -60,12 +70,24 @@ export function CarteiraClient({ dividas, credores }: Props) {
       result = result.filter((d) => d.credor_id === Number(credorFilter))
     }
 
+    if (agingFilter) {
+      result = result.filter((d) => d.faixa_aging === agingFilter)
+    }
+
+    if (dataInicio) {
+      result = result.filter((d) => d.data_vencimento >= dataInicio)
+    }
+
+    if (dataFim) {
+      result = result.filter((d) => d.data_vencimento <= dataFim)
+    }
+
     return [...result].sort((a, b) => {
       if (sortBy === 'valor') return b.valor_atualizado - a.valor_atualizado
       if (sortBy === 'dias') return b.dias_sem_contato - a.dias_sem_contato
       return new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()
     })
-  }, [dividas, search, statusFilter, credorFilter, sortBy])
+  }, [dividas, search, statusFilter, credorFilter, agingFilter, dataInicio, dataFim, sortBy])
 
   const totalFiltered = filtered.reduce((sum, d) => sum + d.valor_atualizado, 0)
 
@@ -149,6 +171,31 @@ export function CarteiraClient({ dividas, credores }: Props) {
             </select>
           </div>
 
+          {/* Aging filter */}
+          <div className="relative">
+            <select
+              value={agingFilter}
+              onChange={(e) => setAgingFilter(e.target.value as any)}
+              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-3 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer"
+            >
+              <option value="">Todas as faixas</option>
+              <option value="baixa">Baixa (1–30d)</option>
+              <option value="media">Média (31–90d)</option>
+              <option value="alta">Alta (91–180d)</option>
+              <option value="critica">Crítica (+180d)</option>
+            </select>
+          </div>
+
+          {/* Período vencimento */}
+          <div className="flex items-center gap-1 bg-surface border border-border-subtle rounded-lg px-2 py-1.5">
+            <Calendar className="w-3.5 h-3.5 text-ink-muted shrink-0" />
+            <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)}
+              className="bg-transparent text-xs text-ink-secondary focus:outline-none w-[110px]" />
+            <span className="text-ink-disabled text-xs">→</span>
+            <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)}
+              className="bg-transparent text-xs text-ink-secondary focus:outline-none w-[110px]" />
+          </div>
+
           <div className="flex items-center gap-1 bg-surface border border-border-subtle rounded-lg p-1">
             <ArrowUpDown className="w-3.5 h-3.5 text-ink-muted ml-1" />
             {([
@@ -156,15 +203,20 @@ export function CarteiraClient({ dividas, credores }: Props) {
               { key: 'valor' as const, label: 'Valor' },
               { key: 'vencimento' as const, label: 'Vencimento' },
             ]).map((s) => (
-              <button
-                key={s.key}
-                onClick={() => setSortBy(s.key)}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === s.key ? 'bg-accent text-white' : 'text-ink-muted hover:text-ink-secondary'}`}
-              >
+              <button key={s.key} onClick={() => setSortBy(s.key)}
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${sortBy === s.key ? 'bg-accent text-white' : 'text-ink-muted hover:text-ink-secondary'}`}>
                 {s.label}
               </button>
             ))}
           </div>
+
+          {hasActiveFilters && (
+            <button onClick={clearFilters}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-danger border border-danger/30 hover:bg-danger-dim transition-colors">
+              <X className="w-3.5 h-3.5" />
+              Limpar filtros
+            </button>
+          )}
         </div>
 
         {/* Table — desktop / Cards — mobile */}

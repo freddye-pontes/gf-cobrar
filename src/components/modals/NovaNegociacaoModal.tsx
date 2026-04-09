@@ -31,6 +31,9 @@ export function NovaNegociacaoModal({ open, onClose, onSuccess, preselectedDivid
   const [numeroParcelas, setNumeroParcelas] = useState('')
   const [valorParcela, setValorParcela] = useState('')
   const [dataPromessa, setDataPromessa] = useState('')
+  const [comissao, setComissao] = useState('')
+  const [comissaoSugerida, setComissaoSugerida] = useState<number | null>(null)
+  const [faixaAging, setFaixaAging] = useState<string>('')
   const [responsavel, setResponsavel] = useState('')
   const [notas, setNotas] = useState('')
   const [loading, setLoading] = useState(false)
@@ -56,10 +59,15 @@ export function NovaNegociacaoModal({ open, onClose, onSuccess, preselectedDivid
     }).catch(() => {}).finally(() => setLoadingDividas(false))
   }, [open, preselectedDividaId])
 
-  // Update valor original when divida changes
+  // Update valor original + aging commission when divida changes
   useEffect(() => {
     const d = dividas.find((d) => d.id === dividaId)
-    if (d) setValorOriginal(d.valor_atualizado)
+    if (d) {
+      setValorOriginal(d.valor_atualizado)
+      setComissaoSugerida(d.comissao_sugerida ?? null)
+      setFaixaAging(d.faixa_aging ?? '')
+      setComissao(String(d.comissao_sugerida ?? ''))
+    }
   }, [dividaId, dividas])
 
   // Auto-calculate desconto when valorOferta changes
@@ -85,6 +93,9 @@ export function NovaNegociacaoModal({ open, onClose, onSuccess, preselectedDivid
     setNumeroParcelas('')
     setValorParcela('')
     setDataPromessa('')
+    setComissao('')
+    setComissaoSugerida(null)
+    setFaixaAging('')
     setResponsavel('')
     setNotas('')
     setError('')
@@ -109,6 +120,7 @@ export function NovaNegociacaoModal({ open, onClose, onSuccess, preselectedDivid
         numero_parcelas: numeroParcelas ? parseInt(numeroParcelas) : null,
         valor_parcela: valorParcela ? parseFloat(valorParcela) : null,
         data_promessa: dataPromessa || null,
+        comissao_percentual: comissao ? parseFloat(comissao) : null,
         responsavel_nome: responsavel.trim(),
         notas: notas.trim(),
       })
@@ -183,6 +195,40 @@ export function NovaNegociacaoModal({ open, onClose, onSuccess, preselectedDivid
           <select value={tipo} onChange={(e) => setTipo(e.target.value)} className={selectCls}>
             {TIPOS.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
+        </FormField>
+
+        {/* Comissão */}
+        <FormField
+          label="Comissão (%)"
+          required
+          hint={
+            faixaAging && comissaoSugerida != null
+              ? `Sugerido pela faixa ${faixaAging === 'critica' ? 'Crítica' : faixaAging === 'alta' ? 'Alta' : faixaAging === 'media' ? 'Média' : 'Baixa'} (${comissaoSugerida}%${faixaAging === 'critica' ? ' a 50%' : ''})`
+              : 'Percentual sobre o valor recuperado'
+          }
+        >
+          <div className="relative">
+            <input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              value={comissao}
+              onChange={(e) => setComissao(e.target.value)}
+              placeholder="Ex: 15"
+              className={inputCls}
+            />
+            {faixaAging && (
+              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded ${
+                faixaAging === 'critica' ? 'bg-red-500/20 text-red-400' :
+                faixaAging === 'alta'    ? 'bg-orange-500/20 text-orange-400' :
+                faixaAging === 'media'   ? 'bg-yellow-500/20 text-yellow-400' :
+                'bg-green-500/20 text-green-400'
+              }`}>
+                {faixaAging === 'critica' ? 'Crítica' : faixaAging === 'alta' ? 'Alta' : faixaAging === 'media' ? 'Média' : 'Baixa'}
+              </span>
+            )}
+          </div>
         </FormField>
 
         {/* Valor acordado */}

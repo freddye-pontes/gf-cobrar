@@ -9,7 +9,6 @@ interface Props {
   open: boolean
   onClose: () => void
   onSuccess: () => void
-  /** Pass credor to edit existing, undefined to create new */
   credor?: APICredorOut
 }
 
@@ -21,13 +20,11 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
   const [pixKey, setPixKey] = useState('')
   const [contatoNome, setContatoNome] = useState('')
   const [contatoEmail, setContatoEmail] = useState('')
-  const [comissao, setComissao] = useState('')
-  const [limiteDesconto, setLimiteDesconto] = useState('')
+  const [observacao, setObservacao] = useState('')
   const [ativo, setAtivo] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Populate fields when editing
   useEffect(() => {
     if (credor) {
       setRazaoSocial(credor.razao_social)
@@ -35,35 +32,41 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
       setPixKey(credor.pix_key ?? '')
       setContatoNome(credor.contato_nome ?? '')
       setContatoEmail(credor.contato_email ?? '')
-      setComissao(String(credor.comissao_percentual))
-      setLimiteDesconto(String(credor.limite_desconto))
+      setObservacao((credor as any).observacao ?? '')
       setAtivo(credor.ativo)
     }
   }, [credor])
 
+  function maskCNPJ(v: string) {
+    const d = v.replace(/\D/g, '').slice(0, 14)
+    return d
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
+  }
+
   function reset() {
     setRazaoSocial(''); setCnpj(''); setPixKey('')
     setContatoNome(''); setContatoEmail('')
-    setComissao(''); setLimiteDesconto('')
-    setAtivo(true); setError('')
+    setObservacao(''); setAtivo(true); setError('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!razaoSocial.trim()) { setError('Informe a razão social.'); return }
     if (!cnpj.trim()) { setError('Informe o CNPJ.'); return }
-    if (!comissao) { setError('Informe o percentual de comissão.'); return }
-    if (!limiteDesconto) { setError('Informe o limite de desconto.'); return }
 
     setLoading(true); setError('')
     const payload = {
       razao_social: razaoSocial.trim(),
-      cnpj: cnpj.trim(),
+      cnpj: cnpj.replace(/\D/g, ''),
       pix_key: pixKey.trim(),
       contato_nome: contatoNome.trim(),
       contato_email: contatoEmail.trim(),
-      comissao_percentual: parseFloat(comissao),
-      limite_desconto: parseFloat(limiteDesconto),
+      observacao: observacao.trim() || null,
+      comissao_percentual: 0,
+      limite_desconto: 0,
       ativo,
     }
     try {
@@ -90,20 +93,12 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
       size="lg"
       footer={
         <>
-          <button
-            type="button"
-            onClick={() => { reset(); onClose() }}
-            disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm text-ink-secondary border border-border-default hover:bg-elevated transition-colors disabled:opacity-50"
-          >
+          <button type="button" onClick={() => { reset(); onClose() }} disabled={loading}
+            className="px-4 py-2 rounded-lg text-sm text-ink-secondary border border-border-default hover:bg-elevated transition-colors disabled:opacity-50">
             Cancelar
           </button>
-          <button
-            form="credor-form"
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-accent hover:bg-accent-light transition-colors disabled:opacity-50"
-          >
+          <button form="credor-form" type="submit" disabled={loading}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-accent hover:bg-accent-light transition-colors disabled:opacity-50">
             {loading ? 'Salvando...' : isEdit ? 'Salvar Alterações' : 'Criar Credor'}
           </button>
         </>
@@ -117,7 +112,8 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <FormField label="CNPJ" required>
-            <input type="text" value={cnpj} onChange={(e) => setCnpj(e.target.value)}
+            <input type="text" value={cnpj}
+              onChange={(e) => setCnpj(maskCNPJ(e.target.value))}
               placeholder="00.000.000/0001-00" className={inputCls} />
           </FormField>
           <FormField label="Chave PIX">
@@ -137,26 +133,17 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
           </FormField>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <FormField label="Comissão (%)" required hint="Percentual sobre valor recuperado">
-            <input type="number" step="0.1" min="0" max="100" value={comissao}
-              onChange={(e) => setComissao(e.target.value)} placeholder="Ex: 15" className={inputCls} />
-          </FormField>
-          <FormField label="Limite de Desconto (%)" required hint="Máximo que operadores podem oferecer">
-            <input type="number" step="0.1" min="0" max="100" value={limiteDesconto}
-              onChange={(e) => setLimiteDesconto(e.target.value)} placeholder="Ex: 30" className={inputCls} />
-          </FormField>
-        </div>
+        <FormField label="Observação" hint="Informações adicionais sobre este credor">
+          <textarea value={observacao} onChange={(e) => setObservacao(e.target.value)}
+            placeholder="Condições especiais, contatos adicionais, notas internas..."
+            rows={3} className={inputCls + ' resize-none'} />
+        </FormField>
 
         {isEdit && (
           <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="ativo-check"
-              checked={ativo}
+            <input type="checkbox" id="ativo-check" checked={ativo}
               onChange={(e) => setAtivo(e.target.checked)}
-              className="w-4 h-4 accent-[#3b82f6]"
-            />
+              className="w-4 h-4 accent-[#3b82f6]" />
             <label htmlFor="ativo-check" className="text-sm text-ink-secondary cursor-pointer">
               Credor ativo
             </label>

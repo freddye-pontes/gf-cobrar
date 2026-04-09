@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { FormField, selectCls, inputCls } from '@/components/ui/FormField'
 import { dividasApi } from '@/lib/api'
@@ -40,8 +40,18 @@ export function MudarStatusModal({ open, onClose, onSuccess, dividaId, statusAtu
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Sync novoStatus when statusAtual or open changes (prevents stale value)
+  useEffect(() => {
+    const opts = STATUS_TRANSITIONS[statusAtual] ?? []
+    setNovoStatus(opts[0] ?? '')
+    setNota('')
+    setOperador('')
+    setError('')
+  }, [statusAtual, open])
+
   function reset() {
-    setNovoStatus(opcoes[0] ?? '')
+    const opts = STATUS_TRANSITIONS[statusAtual] ?? []
+    setNovoStatus(opts[0] ?? '')
     setNota('')
     setOperador('')
     setError('')

@@ -9,8 +9,9 @@ class CredorBase(BaseModel):
     pix_key: Optional[str] = ""
     contato_nome: Optional[str] = ""
     contato_email: Optional[str] = ""
-    comissao_percentual: float
-    limite_desconto: float
+    comissao_percentual: float = 0.0
+    limite_desconto: float = 0.0
+    observacao: Optional[str] = None
     ativo: bool = True
 
 
@@ -26,6 +27,7 @@ class CredorUpdate(BaseModel):
     contato_email: Optional[str] = None
     comissao_percentual: Optional[float] = None
     limite_desconto: Optional[float] = None
+    observacao: Optional[str] = None
     ativo: Optional[bool] = None
 
 

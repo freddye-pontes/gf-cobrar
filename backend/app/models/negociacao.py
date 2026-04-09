@@ -28,6 +28,7 @@ class Negociacao(Base):
     data_promessa: Mapped[Optional[date]] = mapped_column(Date)
     data_conclusao: Mapped[Optional[date]] = mapped_column(Date)
 
+    comissao_percentual: Mapped[Optional[float]] = mapped_column(Numeric(5, 2), nullable=True)
     responsavel_nome: Mapped[str] = mapped_column(String(100))
     notas: Mapped[str] = mapped_column(Text, default="")
 

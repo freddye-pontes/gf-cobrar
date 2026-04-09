@@ -12,6 +12,7 @@ class NegociacaoBase(BaseModel):
     numero_parcelas: Optional[int] = None
     valor_parcela: Optional[float] = None
     data_promessa: Optional[date] = None
+    comissao_percentual: Optional[float] = None
     responsavel_nome: str
     notas: str = ""
 
