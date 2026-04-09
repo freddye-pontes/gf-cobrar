@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 interface Props {
@@ -13,6 +14,10 @@ interface Props {
 }
 
 export function Modal({ title, open, onClose, children, footer, size = 'md' }: Props) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => { setMounted(true) }, [])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     if (open) {
@@ -25,18 +30,21 @@ export function Modal({ title, open, onClose, children, footer, size = 'md' }: P
     }
   }, [open, onClose])
 
-  if (!open) return null
+  if (!mounted || !open) return null
 
   const sizeClass =
     size === 'sm' ? 'sm:max-w-sm' :
     size === 'lg' ? 'sm:max-w-2xl' :
                    'sm:max-w-lg'
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+  return createPortal(
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Dialog */}
       <div
-        className={`relative w-full ${sizeClass} bg-surface border-t sm:border border-border-subtle rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh]`}
+        className={`relative w-full ${sizeClass} bg-surface border-t sm:border border-border-subtle rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh]`}
         style={{ animation: 'fadeUp 0.15s ease-out' }}
       >
         {/* Header */}
@@ -60,6 +68,7 @@ export function Modal({ title, open, onClose, children, footer, size = 'md' }: P
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
