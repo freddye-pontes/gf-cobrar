@@ -4,7 +4,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { selectCls } from '@/components/ui/FormField'
 import { credoresApi, type APICredorOut } from '@/lib/api'
-import { Upload, FileSpreadsheet, Download, CheckCircle, AlertCircle, X } from 'lucide-react'
+import { Upload, FileSpreadsheet, Download, CheckCircle, AlertCircle, X, AlertTriangle } from 'lucide-react'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
 
@@ -36,6 +36,7 @@ interface ImportResult {
   erros: string[]
   devedores_criados: number
   devedores_existentes: number
+  devedores_incompletos: number
 }
 
 type Step = 'upload' | 'mapping' | 'result'
@@ -138,6 +139,19 @@ export function ImportarPlanilhaModal({ open, onClose, onSuccess }: Props) {
   // ── Download template ────────────────────────────────────────────────────────
   function downloadTemplate() {
     window.open(`${BASE_URL}/importar/template`, '_blank')
+  }
+
+  // ── Download error log ────────────────────────────────────────────────────────
+  function downloadErrorLog() {
+    if (!result || result.erros.length === 0) return
+    const content = result.erros.join('\n')
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `erros_importacao_${new Date().toISOString().slice(0, 10)}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -333,11 +347,34 @@ export function ImportarPlanilhaModal({ open, onClose, onSuccess }: Props) {
             </div>
           </div>
 
+          {result.devedores_incompletos > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-400">
+                  {result.devedores_incompletos} devedor{result.devedores_incompletos > 1 ? 'es' : ''} com cadastro incompleto
+                </p>
+                <p className="text-xs text-ink-muted mt-0.5">
+                  Devedores criados via planilha possuem apenas os dados mínimos. Complete o cadastro na Carteira filtrando por &quot;Incompletos&quot;.
+                </p>
+              </div>
+            </div>
+          )}
+
           {result.erros.length > 0 && (
             <div className="bg-danger-dim border border-danger/20 rounded-xl p-4 space-y-1 max-h-40 overflow-y-auto">
-              <p className="text-xs font-mono text-danger uppercase tracking-wider mb-2 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" /> {result.erros.length} linha(s) com erro
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-mono text-danger uppercase tracking-wider flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {result.erros.length} linha(s) com erro
+                </p>
+                <button
+                  onClick={downloadErrorLog}
+                  className="flex items-center gap-1 text-xs text-ink-muted hover:text-ink-primary transition-colors"
+                >
+                  <Download className="w-3 h-3" />
+                  Baixar log
+                </button>
+              </div>
               {result.erros.map((e, i) => (
                 <p key={i} className="text-xs text-danger/80 font-mono">{e}</p>
               ))}

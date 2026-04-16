@@ -29,6 +29,8 @@ class Devedor(Base):
     estado: Mapped[str] = mapped_column(String(2), default="")
     cep: Mapped[str] = mapped_column(String(10), default="")
 
+    cadastro_status: Mapped[str] = mapped_column(String(30), default="COMPLETO")  # COMPLETO | CADASTRO_INCOMPLETO
+
     score_spc: Mapped[Optional[int]] = mapped_column(Integer)
     perfil: Mapped[str] = mapped_column(String(20), default="varejo")  # B2B | varejo | recorrente
 

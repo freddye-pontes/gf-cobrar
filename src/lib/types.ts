@@ -20,6 +20,8 @@ export type TipoNegociacao = 'desconto' | 'parcelamento' | 'ptp'
 
 export type CanalContato = 'whatsapp' | 'email' | 'telefone' | 'sistema'
 
+export type CadastroStatus = 'COMPLETO' | 'CADASTRO_INCOMPLETO'
+
 export interface Endereco {
   logradouro: string
   numero: string
@@ -48,6 +50,7 @@ export interface Devedor {
   endereco: Endereco
   scoreSpc?: number
   perfil: PerfilDevedor
+  cadastroStatus: CadastroStatus
   createdAt: string
   updatedAt: string
 }

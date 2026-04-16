@@ -12,10 +12,36 @@ def _to_out(m: Devedor) -> DevedorOut:
     return DevedorOut.from_orm_with_endereco(m)
 
 
+@router.get("/buscar-documento/{cpf_cnpj}", response_model=DevedorOut)
+def buscar_por_documento(cpf_cnpj: str, db: Session = Depends(get_db)):
+    """Busca devedor por CPF/CNPJ (somente dígitos). Usado para autocomplete no NovaDividaModal."""
+    digits = "".join(c for c in cpf_cnpj if c.isdigit())
+    d = db.query(Devedor).filter(Devedor.cpf_cnpj == digits).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Devedor não encontrado")
+    return _to_out(d)
+
+
+@router.patch("/{devedor_id}/status-cadastro", response_model=DevedorOut)
+def atualizar_status_cadastro(
+    devedor_id: int,
+    db: Session = Depends(get_db),
+):
+    """Marca o devedor como COMPLETO após o operador preencher dados faltantes."""
+    d = db.query(Devedor).filter(Devedor.id == devedor_id).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Devedor não encontrado")
+    d.cadastro_status = "COMPLETO"
+    db.commit()
+    db.refresh(d)
+    return _to_out(d)
+
+
 @router.get("/", response_model=list[DevedorOut])
 def listar_devedores(
     search: str | None = Query(None),
     perfil: str | None = Query(None),
+    cadastro_status: str | None = Query(None),
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
@@ -25,6 +51,8 @@ def listar_devedores(
         q = q.filter(Devedor.nome.ilike(f"%{search}%"))
     if perfil:
         q = q.filter(Devedor.perfil == perfil)
+    if cadastro_status:
+        q = q.filter(Devedor.cadastro_status == cadastro_status)
     return [_to_out(d) for d in q.order_by(Devedor.nome).offset(skip).limit(limit).all()]
 
 

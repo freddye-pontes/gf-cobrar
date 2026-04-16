@@ -35,6 +35,18 @@ async function put<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>
 }
 
+async function patch<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    throw new Error(`API PATCH ${path} → ${res.status} ${res.statusText}`)
+  }
+  return res.json() as Promise<T>
+}
+
 // ── Types (API response shapes) ───────────────────────────────────────────────
 
 export interface APIKPITrend {
@@ -96,6 +108,7 @@ export interface APIDividaListOut {
   dias_atraso: number
   faixa_aging: 'em_dia' | 'baixa' | 'media' | 'alta' | 'critica'
   comissao_sugerida: number
+  devedor_cadastro_status: 'COMPLETO' | 'CADASTRO_INCOMPLETO'
 }
 
 export interface APIHistoricoContato {
@@ -122,6 +135,7 @@ export interface APIDevedor {
   email: string | null
   score_spc: number | null
   perfil: string | null
+  cadastro_status: 'COMPLETO' | 'CADASTRO_INCOMPLETO'
   endereco: {
     logradouro: string | null
     numero: string | null
@@ -215,16 +229,21 @@ export const dividasApi = {
 // ── Devedores ─────────────────────────────────────────────────────────────────
 
 export const devedoresApi = {
-  list: (params?: { search?: string; perfil?: string }) => {
+  list: (params?: { search?: string; perfil?: string; cadastro_status?: string }) => {
     const qs = new URLSearchParams()
     if (params?.search) qs.set('search', params.search)
     if (params?.perfil) qs.set('perfil', params.perfil)
+    if (params?.cadastro_status) qs.set('cadastro_status', params.cadastro_status)
     const q = qs.toString()
     return get<APIDevedor[]>(`/devedores${q ? `?${q}` : ''}`)
   },
   get: (id: number) => get<APIDevedor>(`/devedores/${id}`),
+  buscarDocumento: (cpfCnpj: string) =>
+    get<APIDevedor>(`/devedores/buscar-documento/${cpfCnpj.replace(/\D/g, '')}`),
   create: (body: unknown) => post<APIDevedor>('/devedores/', body),
   update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}/`, body),
+  patchStatusCadastro: (id: number) =>
+    patch<APIDevedor>(`/devedores/${id}/status-cadastro`),
 }
 
 // ── Credores ──────────────────────────────────────────────────────────────────

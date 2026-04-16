@@ -35,6 +35,7 @@ class DevedorUpdate(BaseModel):
     endereco: Optional[EnderecoSchema] = None
     score_spc: Optional[int] = None
     perfil: Optional[str] = None
+    cadastro_status: Optional[str] = None
 
 
 class DevedorOut(BaseModel):
@@ -49,6 +50,7 @@ class DevedorOut(BaseModel):
     endereco: Optional[EnderecoSchema] = None
     score_spc: Optional[int]
     perfil: str
+    cadastro_status: str = "COMPLETO"
     created_at: datetime
     updated_at: datetime
 
@@ -75,6 +77,7 @@ class DevedorOut(BaseModel):
             ),
             score_spc=m.score_spc,
             perfil=m.perfil,
+            cadastro_status=m.cadastro_status,
             created_at=m.created_at,
             updated_at=m.updated_at,
         )

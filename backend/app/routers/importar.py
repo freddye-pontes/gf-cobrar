@@ -190,6 +190,7 @@ class ImportResult(BaseModel):
     erros: list[str]
     devedores_criados: int
     devedores_existentes: int
+    devedores_incompletos: int  # novos devedores criados via import (sem dados completos)
 
 
 @router.post("/executar", response_model=ImportResult)
@@ -246,6 +247,7 @@ async def executar_importacao(
                     telefones=[tel] if tel else [],
                     email=get(row, "email") or None,
                     perfil="varejo",
+                    cadastro_status="CADASTRO_INCOMPLETO",
                 )
                 db.add(devedor)
                 db.flush()
@@ -321,4 +323,5 @@ async def executar_importacao(
         erros=erros[:20],   # limita erros no response
         devedores_criados=devedores_criados,
         devedores_existentes=devedores_existentes,
+        devedores_incompletos=devedores_criados,  # todos os novos devedores importados são incompletos
     )

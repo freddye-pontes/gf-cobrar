@@ -64,6 +64,8 @@ def _build_list_out(d: Divida) -> DividaListOut:
         ultimo = max(d.historico, key=lambda h: h.data)
         out.ultimo_canal = ultimo.canal
     out.dias_atraso, out.faixa_aging, out.comissao_sugerida = _calcular_aging(d.data_vencimento)
+    if d.devedor:
+        out.devedor_cadastro_status = d.devedor.cadastro_status
     return out
 
 

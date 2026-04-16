@@ -83,6 +83,9 @@ class DividaListOut(BaseModel):
     faixa_aging: str = "em_dia"        # em_dia | baixa | media | alta | critica
     comissao_sugerida: float = 0.0
 
+    # Devedor cadastro status (joined from devedor)
+    devedor_cadastro_status: str = "COMPLETO"
+
 
 class DividaOut(DividaListOut):
     """Full view with history."""

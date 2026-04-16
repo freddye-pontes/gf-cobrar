@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { FormField, inputCls, selectCls } from '@/components/ui/FormField'
 import { devedoresApi, credoresApi, dividasApi, type APIDevedor, type APICredorOut } from '@/lib/api'
+import { Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 
 interface Props {
   open: boolean
@@ -22,13 +23,39 @@ const TIPOS = [
   { value: 'servico',  label: 'Serviço' },
 ]
 
+function maskCPF(v: string) {
+  return v.replace(/\D/g, '').slice(0, 11)
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+}
+
+function maskCNPJ(v: string) {
+  return v.replace(/\D/g, '').slice(0, 14)
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d{1,2})$/, '$1-$2')
+}
+
+function maskDoc(v: string) {
+  const digits = v.replace(/\D/g, '')
+  if (digits.length <= 11) return maskCPF(digits)
+  return maskCNPJ(digits)
+}
+
 export function NovaDividaModal({
   open, onClose, onSuccess,
   preselectedCredorId, preselectedDevedorId,
 }: Props) {
-  const [devedores, setDevedores] = useState<APIDevedor[]>([])
   const [credores, setCredores] = useState<APICredorOut[]>([])
   const [loadingData, setLoadingData] = useState(false)
+
+  // Devedor lookup state (only when not preselected)
+  const [docInput, setDocInput] = useState('')
+  const [lookupStatus, setLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle')
+  const [foundDevedor, setFoundDevedor] = useState<APIDevedor | null>(null)
+  const [preselectedDevedorName, setPreselectedDevedorName] = useState('')
 
   const [devedorId, setDevedorId] = useState(preselectedDevedorId ?? 0)
   const [credorId, setCredorId] = useState(preselectedCredorId ?? 0)
@@ -50,26 +77,64 @@ export function NovaDividaModal({
   useEffect(() => {
     if (!open) return
     setLoadingData(true)
-    Promise.all([devedoresApi.list(), credoresApi.list()])
-      .then(([devs, creds]) => {
-        setDevedores(devs)
-        setCredores(creds)
-        if (!preselectedDevedorId && devs.length > 0) setDevedorId(devs[0].id)
-        if (!preselectedCredorId && creds.length > 0) setCredorId(creds[0].id)
+    const promises: Promise<unknown>[] = [credoresApi.list()]
+    if (preselectedDevedorId) {
+      promises.push(devedoresApi.get(preselectedDevedorId))
+    }
+    Promise.all(promises)
+      .then(([creds, dev]) => {
+        setCredores(creds as APICredorOut[])
+        if (!preselectedCredorId && (creds as APICredorOut[]).length > 0) {
+          setCredorId((creds as APICredorOut[])[0].id)
+        }
+        if (dev) {
+          setPreselectedDevedorName((dev as APIDevedor).nome)
+        }
       })
       .catch(() => {})
       .finally(() => setLoadingData(false))
   }, [open, preselectedCredorId, preselectedDevedorId])
 
+  async function handleDocLookup(value: string) {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length !== 11 && digits.length !== 14) return
+    setLookupStatus('loading')
+    setFoundDevedor(null)
+    setDevedorId(0)
+    try {
+      const dev = await devedoresApi.buscarDocumento(digits)
+      setFoundDevedor(dev)
+      setDevedorId(dev.id)
+      setLookupStatus('found')
+    } catch {
+      setLookupStatus('not_found')
+    }
+  }
+
+  function handleDocChange(v: string) {
+    const masked = maskDoc(v)
+    setDocInput(masked)
+    setLookupStatus('idle')
+    setFoundDevedor(null)
+    setDevedorId(0)
+    // Auto-lookup when complete
+    const digits = v.replace(/\D/g, '')
+    if (digits.length === 11 || digits.length === 14) {
+      handleDocLookup(digits)
+    }
+  }
+
   function reset() {
+    setDocInput(''); setLookupStatus('idle'); setFoundDevedor(null)
     setValorOriginal(''); setValorAtualizado(''); setAtualizadoTouched(false)
     setDataVencimento(''); setDataEmissao(''); setTipo('boleto')
     setNumeroContrato(''); setError('')
+    setDevedorId(preselectedDevedorId ?? 0)
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!devedorId) { setError('Selecione o devedor.'); return }
+    if (!devedorId) { setError('Informe o CPF/CNPJ do devedor e aguarde a busca.'); return }
     if (!credorId) { setError('Selecione o credor.'); return }
     if (!valorOriginal) { setError('Informe o valor original.'); return }
     if (!dataVencimento) { setError('Informe a data de vencimento.'); return }
@@ -119,21 +184,44 @@ export function NovaDividaModal({
       <form id="divida-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Devedor */}
         {!preselectedDevedorId ? (
-          <FormField label="Devedor" required>
-            <select value={devedorId} onChange={(e) => setDevedorId(Number(e.target.value))}
-              disabled={loadingData} className={selectCls}>
-              {loadingData && <option>Carregando...</option>}
-              {devedores.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.nome} — {d.cpf_cnpj}
-                </option>
-              ))}
-            </select>
+          <FormField label="CPF / CNPJ do Devedor" required hint="Digite para buscar o devedor cadastrado">
+            <div className="relative">
+              <input
+                type="text"
+                value={docInput}
+                onChange={(e) => handleDocChange(e.target.value)}
+                placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                className={inputCls + (lookupStatus === 'not_found' ? ' border-amber-500/60' : lookupStatus === 'found' ? ' border-emerald/60' : '')}
+              />
+              {lookupStatus === 'loading' && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted animate-spin" />
+              )}
+              {lookupStatus === 'found' && (
+                <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-emerald" />
+              )}
+              {lookupStatus === 'not_found' && (
+                <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-400" />
+              )}
+            </div>
+            {lookupStatus === 'found' && foundDevedor && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-emerald bg-emerald/5 border border-emerald/20 rounded-lg px-2.5 py-1.5">
+                <CheckCircle2 className="w-3 h-3 shrink-0" />
+                <span className="font-medium">{foundDevedor.nome}</span>
+                {foundDevedor.cadastro_status === 'CADASTRO_INCOMPLETO' && (
+                  <span className="ml-1 text-amber-400 font-normal">· cadastro incompleto</span>
+                )}
+              </div>
+            )}
+            {lookupStatus === 'not_found' && (
+              <p className="text-amber-400 text-xs mt-1">
+                Devedor não encontrado. Cadastre-o primeiro em &quot;Novo Devedor&quot;.
+              </p>
+            )}
           </FormField>
         ) : (
           <div className="bg-elevated border border-border-default rounded-lg px-3 py-2 text-xs font-mono text-ink-muted">
             Devedor: <span className="text-ink-primary font-bold">
-              {devedores.find((d) => d.id === preselectedDevedorId)?.nome ?? `#${preselectedDevedorId}`}
+              {preselectedDevedorName || `#${preselectedDevedorId}`}
             </span>
           </div>
         )}

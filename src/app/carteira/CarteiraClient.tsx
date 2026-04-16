@@ -10,7 +10,7 @@ import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
 import { ImportarPlanilhaModal } from '@/components/modals/ImportarPlanilhaModal'
 import {
   Search, Filter, Upload, ChevronRight,
-  Building2, User, ArrowUpDown, Plus, UserPlus, X, Calendar,
+  Building2, User, ArrowUpDown, Plus, UserPlus, X, Calendar, AlertTriangle,
 } from 'lucide-react'
 import type { APIDividaListOut, APICredorOut } from '@/lib/api'
 import type { StatusDivida } from '@/lib/types'
@@ -38,13 +38,14 @@ export function CarteiraClient({ dividas, credores }: Props) {
   const [agingFilter, setAgingFilter] = useState<'' | 'baixa' | 'media' | 'alta' | 'critica'>('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [filtroCadastro, setFiltroCadastro] = useState(false)
   const [sortBy, setSortBy] = useState<'valor' | 'dias' | 'vencimento'>('dias')
 
-  const hasActiveFilters = !!(search || statusFilter || credorFilter || agingFilter || dataInicio || dataFim)
+  const hasActiveFilters = !!(search || statusFilter || credorFilter || agingFilter || dataInicio || dataFim || filtroCadastro)
 
   function clearFilters() {
     setSearch(''); setStatusFilter(''); setCredorFilter('')
-    setAgingFilter(''); setDataInicio(''); setDataFim('')
+    setAgingFilter(''); setDataInicio(''); setDataFim(''); setFiltroCadastro(false)
   }
   const [novaDividaOpen, setNovaDividaOpen] = useState(false)
   const [novoDevedorOpen, setNovoDevedorOpen] = useState(false)
@@ -74,6 +75,10 @@ export function CarteiraClient({ dividas, credores }: Props) {
       result = result.filter((d) => d.faixa_aging === agingFilter)
     }
 
+    if (filtroCadastro) {
+      result = result.filter((d) => d.devedor_cadastro_status === 'CADASTRO_INCOMPLETO')
+    }
+
     if (dataInicio) {
       result = result.filter((d) => d.data_vencimento >= dataInicio)
     }
@@ -87,7 +92,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
       if (sortBy === 'dias') return b.dias_sem_contato - a.dias_sem_contato
       return new Date(a.data_vencimento).getTime() - new Date(b.data_vencimento).getTime()
     })
-  }, [dividas, search, statusFilter, credorFilter, agingFilter, dataInicio, dataFim, sortBy])
+  }, [dividas, search, statusFilter, credorFilter, agingFilter, dataInicio, dataFim, filtroCadastro, sortBy])
 
   const totalFiltered = filtered.reduce((sum, d) => sum + d.valor_atualizado, 0)
 
@@ -196,6 +201,19 @@ export function CarteiraClient({ dividas, credores }: Props) {
               className="bg-transparent text-xs text-ink-secondary focus:outline-none w-[110px]" />
           </div>
 
+          {/* Cadastro incompleto filter */}
+          <button
+            onClick={() => setFiltroCadastro((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+              filtroCadastro
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                : 'bg-surface border-border-subtle text-ink-muted hover:text-ink-secondary'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Incompletos
+          </button>
+
           <div className="flex items-center gap-1 bg-surface border border-border-subtle rounded-lg p-1">
             <ArrowUpDown className="w-3.5 h-3.5 text-ink-muted ml-1" />
             {([
@@ -246,9 +264,17 @@ export function CarteiraClient({ dividas, credores }: Props) {
                       {row.devedor_tipo === 'PJ' ? <Building2 className="w-3 h-3 text-ink-muted" /> : <User className="w-3 h-3 text-ink-muted" />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-ink-primary text-sm font-medium truncate group-hover:text-accent-light transition-colors">
-                        {row.devedor_nome ?? `Devedor #${row.devedor_id}`}
-                      </p>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <p className="text-ink-primary text-sm font-medium truncate group-hover:text-accent-light transition-colors">
+                          {row.devedor_nome ?? `Devedor #${row.devedor_id}`}
+                        </p>
+                        {row.devedor_cadastro_status === 'CADASTRO_INCOMPLETO' && (
+                          <span className="shrink-0 flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded px-1 py-0.5">
+                            <AlertTriangle className="w-2.5 h-2.5" />
+                            Incompleto
+                          </span>
+                        )}
+                      </div>
                       {/* Mobile-only subtitle */}
                       <p className="text-ink-muted text-xs truncate md:hidden">
                         {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
