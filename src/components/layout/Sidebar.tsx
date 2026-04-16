@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   Users,
+  UserCheck,
   GitBranch,
   Handshake,
   Building2,
@@ -20,12 +21,13 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, badge: null },
-  { href: '/carteira', label: 'Carteira', icon: Users, badge: '10' },
-  { href: '/regua', label: 'Régua', icon: GitBranch, badge: null },
-  { href: '/negociacao', label: 'Negociação', icon: Handshake, badge: '4' },
-  { href: '/credores', label: 'Credores', icon: Building2, badge: null },
-  { href: '/portal', label: 'Portal Credor', icon: ExternalLink, badge: null },
+  { href: '/dashboard',  label: 'Dashboard',  icon: LayoutDashboard, badge: null },
+  { href: '/devedores',  label: 'Devedores',  icon: UserCheck,       badge: null },
+  { href: '/carteira',   label: 'Carteira',   icon: Users,           badge: '10' },
+  { href: '/regua',      label: 'Régua',      icon: GitBranch,       badge: null },
+  { href: '/negociacao', label: 'Negociação', icon: Handshake,       badge: '4'  },
+  { href: '/credores',   label: 'Credores',   icon: Building2,       badge: null },
+  { href: '/portal',     label: 'Portal Credor', icon: ExternalLink, badge: null },
 ]
 
 export function Sidebar() {
