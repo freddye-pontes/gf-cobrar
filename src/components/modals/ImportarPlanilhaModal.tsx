@@ -159,7 +159,7 @@ export function ImportarPlanilhaModal({ open, onClose, onSuccess }: Props) {
     <button onClick={downloadTemplate}
       className="flex items-center gap-2 text-sm text-ink-secondary hover:text-accent transition-colors">
       <Download className="w-4 h-4" />
-      Baixar planilha modelo
+      Baixar planilha modelo (.xlsx)
     </button>
   )
 

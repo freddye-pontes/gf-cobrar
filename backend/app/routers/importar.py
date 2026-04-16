@@ -167,16 +167,58 @@ def _parse_float(val: str) -> Optional[float]:
 
 @router.get("/template")
 def download_template():
-    """Retorna o CSV-modelo para o usuário preencher."""
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(TEMPLATE_HEADERS)
-    writer.writerow(TEMPLATE_EXAMPLE)
+    """Retorna o XLSX-modelo para o usuário preencher."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Importação"
+
+    # Header style
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(fill_type="solid", fgColor="1E3A5F")
+    header_align = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    thin = Side(style="thin", color="CCCCCC")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    ws.append(TEMPLATE_HEADERS)
+    ws.append(TEMPLATE_EXAMPLE)
+
+    # Style header row
+    for col_idx, _ in enumerate(TEMPLATE_HEADERS, start=1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = border
+
+    # Style example row
+    example_fill = PatternFill(fill_type="solid", fgColor="F0F4F8")
+    example_font = Font(color="444444", size=10, italic=True)
+    for col_idx in range(1, len(TEMPLATE_EXAMPLE) + 1):
+        cell = ws.cell(row=2, column=col_idx)
+        cell.fill = example_fill
+        cell.font = example_font
+        cell.alignment = Alignment(horizontal="left", vertical="center")
+        cell.border = border
+
+    # Column widths
+    col_widths = [16, 24, 18, 12, 24, 18, 28, 14, 16, 18, 14, 16, 20]
+    for i, width in enumerate(col_widths, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    ws.row_dimensions[1].height = 30
+
+    output = io.BytesIO()
+    wb.save(output)
     output.seek(0)
+
     return StreamingResponse(
-        iter([output.getvalue().encode("utf-8-sig")]),
-        media_type="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="template_importacao_gfcobrar.csv"'},
+        iter([output.read()]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": 'attachment; filename="template_importacao_gfcobrar.xlsx"'},
     )
 
 
