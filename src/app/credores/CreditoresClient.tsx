@@ -7,9 +7,9 @@ import { formatCurrency, formatCurrencyCompact } from '@/lib/utils'
 import { NovoCredorModal } from '@/components/modals/NovoCredorModal'
 import { GerarRepasseModal } from '@/components/modals/GerarRepasseModal'
 import { ConfirmModal } from '@/components/modals/ConfirmModal'
-import { repassesApi, type APICredorOut, type APIRepasseOut } from '@/lib/api'
+import { credoresApi, repassesApi, type APICredorOut, type APIRepasseOut } from '@/lib/api'
 import {
-  Building2, Plus, ChevronDown, ChevronUp, Pencil,
+  Building2, Plus, ChevronDown, ChevronUp, Pencil, Trash2,
   DollarSign, Percent, Send, CheckCircle2, Clock, AlertCircle,
 } from 'lucide-react'
 
@@ -35,6 +35,7 @@ export function CreditoresClient({ credores, repasses }: Props) {
   const [editCreador, setEditCreador] = useState<APICredorOut | null>(null)
   const [repasseModal, setRepasseModal] = useState<APICredorOut | null>(null)
   const [aprovarRepasse, setAprovarRepasse] = useState<APIRepasseOut | null>(null)
+  const [deleteCreador, setDeleteCreador] = useState<APICredorOut | null>(null)
 
   const totalCarteira = credores.reduce((s, c) => s + c.total_carteira, 0)
   const totalRecuperado = credores.reduce((s, c) => s + c.total_recuperado, 0)
@@ -179,6 +180,13 @@ export function CreditoresClient({ credores, repasses }: Props) {
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeleteCreador(credor) }}
+                      className="p-1.5 rounded-lg text-ink-muted hover:text-danger hover:bg-danger-dim transition-colors shrink-0 mt-0.5"
+                      title="Excluir credor"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
 
                     {isExpanded ? (
                       <ChevronUp className="w-4 h-4 text-ink-muted shrink-0 mt-1" />
@@ -303,6 +311,19 @@ export function CreditoresClient({ credores, repasses }: Props) {
         onConfirm={async () => {
           await repassesApi.aprovar(aprovarRepasse!.id)
           await repassesApi.executar(aprovarRepasse!.id)
+          refresh()
+        }}
+      />
+
+      <ConfirmModal
+        open={Boolean(deleteCreador)}
+        onClose={() => setDeleteCreador(null)}
+        title="Excluir Credor"
+        description={`Tem certeza que deseja excluir "${deleteCreador?.razao_social}"? Todas as dívidas e negociações associadas também serão excluídas. Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        danger
+        onConfirm={async () => {
+          await credoresApi.delete(deleteCreador!.id)
           refresh()
         }}
       />

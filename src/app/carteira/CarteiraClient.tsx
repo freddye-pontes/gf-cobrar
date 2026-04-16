@@ -4,15 +4,15 @@ import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/ui/StatusBadge'
+import { ConfirmModal } from '@/components/modals/ConfirmModal'
 import { formatCurrency } from '@/lib/utils'
 import { NovaDividaModal } from '@/components/modals/NovaDividaModal'
-import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
 import { ImportarPlanilhaModal } from '@/components/modals/ImportarPlanilhaModal'
+import { dividasApi, type APIDividaListOut, type APICredorOut } from '@/lib/api'
 import {
   Search, Filter, Upload, ChevronRight,
-  Building2, User, ArrowUpDown, Plus, UserPlus, X, Calendar, AlertTriangle,
+  Building2, User, ArrowUpDown, Plus, X, Calendar, AlertTriangle, Trash2,
 } from 'lucide-react'
-import type { APIDividaListOut, APICredorOut } from '@/lib/api'
 import type { StatusDivida } from '@/lib/types'
 
 const STATUS_OPTIONS: { value: '' | StatusDivida; label: string }[] = [
@@ -41,19 +41,19 @@ export function CarteiraClient({ dividas, credores }: Props) {
   const [filtroCadastro, setFiltroCadastro] = useState(false)
   const [sortBy, setSortBy] = useState<'valor' | 'dias' | 'vencimento'>('dias')
 
+  const [novaDividaOpen, setNovaDividaOpen] = useState(false)
+  const [importarOpen, setImportarOpen] = useState(false)
+  const [deleteDivida, setDeleteDivida] = useState<APIDividaListOut | null>(null)
+
   const hasActiveFilters = !!(search || statusFilter || credorFilter || agingFilter || dataInicio || dataFim || filtroCadastro)
 
   function clearFilters() {
     setSearch(''); setStatusFilter(''); setCredorFilter('')
     setAgingFilter(''); setDataInicio(''); setDataFim(''); setFiltroCadastro(false)
   }
-  const [novaDividaOpen, setNovaDividaOpen] = useState(false)
-  const [novoDevedorOpen, setNovoDevedorOpen] = useState(false)
-  const [importarOpen, setImportarOpen] = useState(false)
 
   const filtered = useMemo(() => {
     let result = dividas
-
     if (search) {
       const q = search.toLowerCase()
       result = result.filter(
@@ -62,31 +62,12 @@ export function CarteiraClient({ dividas, credores }: Props) {
           (d.credor_nome ?? '').toLowerCase().includes(q),
       )
     }
-
-    if (statusFilter) {
-      result = result.filter((d) => d.status === statusFilter)
-    }
-
-    if (credorFilter) {
-      result = result.filter((d) => d.credor_id === Number(credorFilter))
-    }
-
-    if (agingFilter) {
-      result = result.filter((d) => d.faixa_aging === agingFilter)
-    }
-
-    if (filtroCadastro) {
-      result = result.filter((d) => d.devedor_cadastro_status === 'CADASTRO_INCOMPLETO')
-    }
-
-    if (dataInicio) {
-      result = result.filter((d) => d.data_vencimento >= dataInicio)
-    }
-
-    if (dataFim) {
-      result = result.filter((d) => d.data_vencimento <= dataFim)
-    }
-
+    if (statusFilter) result = result.filter((d) => d.status === statusFilter)
+    if (credorFilter) result = result.filter((d) => d.credor_id === Number(credorFilter))
+    if (agingFilter) result = result.filter((d) => d.faixa_aging === agingFilter)
+    if (filtroCadastro) result = result.filter((d) => d.devedor_cadastro_status === 'CADASTRO_INCOMPLETO')
+    if (dataInicio) result = result.filter((d) => d.data_vencimento >= dataInicio)
+    if (dataFim) result = result.filter((d) => d.data_vencimento <= dataFim)
     return [...result].sort((a, b) => {
       if (sortBy === 'valor') return b.valor_atualizado - a.valor_atualizado
       if (sortBy === 'dias') return b.dias_sem_contato - a.dias_sem_contato
@@ -104,7 +85,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display font-bold text-xl text-ink-primary tracking-tight">
-              Carteira de Devedores
+              Carteira de Dívidas
             </h1>
             <p className="text-ink-muted text-xs font-mono mt-0.5">
               {filtered.length} dívidas · {formatCurrency(totalFiltered)}
@@ -116,13 +97,6 @@ export function CarteiraClient({ dividas, credores }: Props) {
               className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-4 py-2">
               <Upload className="w-4 h-4" />
               <span className="hidden md:inline">Importar CSV</span>
-            </button>
-            <button
-              onClick={() => setNovoDevedorOpen(true)}
-              className="hidden sm:flex items-center gap-2 bg-elevated hover:bg-overlay border border-border-default transition-colors text-ink-secondary text-sm font-medium rounded-lg px-3 py-2 md:px-4"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span className="hidden md:inline">Novo Devedor</span>
             </button>
             <button
               onClick={() => setNovaDividaOpen(true)}
@@ -140,49 +114,31 @@ export function CarteiraClient({ dividas, credores }: Props) {
         <div className="flex flex-wrap items-center gap-3 mb-5 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
           <div className="relative flex-1 min-w-[200px] max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" />
-            <input
-              type="text"
-              placeholder="Buscar devedor ou credor..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-surface border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:border-accent/50 transition-colors"
-            />
+            <input type="text" placeholder="Buscar devedor ou credor..."
+              value={search} onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-surface border border-border-subtle rounded-lg pl-8 pr-3 py-2 text-sm text-ink-primary placeholder-ink-muted focus:outline-none focus:border-accent/50 transition-colors" />
           </div>
 
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted pointer-events-none" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as '' | StatusDivida)}
-              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-8 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as '' | StatusDivida)}
+              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-8 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer">
+              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
 
           <div className="relative">
             <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted pointer-events-none" />
-            <select
-              value={credorFilter}
-              onChange={(e) => setCredorFilter(e.target.value)}
-              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-8 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer"
-            >
+            <select value={credorFilter} onChange={(e) => setCredorFilter(e.target.value)}
+              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-8 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer">
               <option value="">Todos os credores</option>
-              {credores.map((c) => (
-                <option key={c.id} value={String(c.id)}>{c.razao_social}</option>
-              ))}
+              {credores.map((c) => <option key={c.id} value={String(c.id)}>{c.razao_social}</option>)}
             </select>
           </div>
 
-          {/* Aging filter */}
           <div className="relative">
-            <select
-              value={agingFilter}
-              onChange={(e) => setAgingFilter(e.target.value as any)}
-              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-3 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer"
-            >
+            <select value={agingFilter} onChange={(e) => setAgingFilter(e.target.value as any)}
+              className="appearance-none bg-surface border border-border-subtle rounded-lg pl-3 pr-8 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 cursor-pointer">
               <option value="">Todas as faixas</option>
               <option value="baixa">Baixa (1–30d)</option>
               <option value="media">Média (31–90d)</option>
@@ -191,7 +147,6 @@ export function CarteiraClient({ dividas, credores }: Props) {
             </select>
           </div>
 
-          {/* Período vencimento */}
           <div className="flex items-center gap-1 bg-surface border border-border-subtle rounded-lg px-2 py-1.5">
             <Calendar className="w-3.5 h-3.5 text-ink-muted shrink-0" />
             <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)}
@@ -201,15 +156,10 @@ export function CarteiraClient({ dividas, credores }: Props) {
               className="bg-transparent text-xs text-ink-secondary focus:outline-none w-[110px]" />
           </div>
 
-          {/* Cadastro incompleto filter */}
-          <button
-            onClick={() => setFiltroCadastro((v) => !v)}
+          <button onClick={() => setFiltroCadastro((v) => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
-              filtroCadastro
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                : 'bg-surface border-border-subtle text-ink-muted hover:text-ink-secondary'
-            }`}
-          >
+              filtroCadastro ? 'bg-amber-500/15 border-amber-500/40 text-amber-400' : 'bg-surface border-border-subtle text-ink-muted hover:text-ink-secondary'
+            }`}>
             <AlertTriangle className="w-3.5 h-3.5" />
             Incompletos
           </button>
@@ -237,10 +187,9 @@ export function CarteiraClient({ dividas, credores }: Props) {
           )}
         </div>
 
-        {/* Table — desktop / Cards — mobile */}
+        {/* Table */}
         <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
-          {/* Desktop header */}
-          <div className="hidden md:grid grid-cols-[1fr_130px_140px_110px_120px_80px_36px] gap-3 px-5 py-3 border-b"
+          <div className="hidden md:grid grid-cols-[1fr_130px_140px_110px_120px_80px_64px] gap-3 px-5 py-3 border-b"
             style={{ background: '#0d0d0d', borderColor: 'rgba(245,158,11,0.2)' }}>
             {['Devedor', 'Chave', 'Credor', 'Aging', 'Valor Atual', 'Status', ''].map((h) => (
               <span key={h} className="text-[10px] font-mono uppercase tracking-wider"
@@ -255,11 +204,11 @@ export function CarteiraClient({ dividas, credores }: Props) {
               </div>
             ) : (
               filtered.map((row) => (
-                <Link key={row.id} href={`/carteira/${row.devedor_id}`}
-                  className="group hover:bg-elevated/50 transition-colors table-row-hover block md:grid md:grid-cols-[1fr_130px_140px_110px_120px_80px_36px] gap-3 px-4 md:px-5 py-3.5 items-center"
+                <div key={row.id}
+                  className="group hover:bg-elevated/50 transition-colors block md:grid md:grid-cols-[1fr_130px_140px_110px_120px_80px_64px] gap-3 px-4 md:px-5 py-3.5 items-center"
                 >
-                  {/* Col 1 — Devedor (mobile: card completo, desktop: só nome) */}
-                  <div className="flex items-center gap-2 min-w-0">
+                  {/* Col 1 — Devedor */}
+                  <Link href={`/carteira/${row.devedor_id}`} className="flex items-center gap-2 min-w-0">
                     <div className="w-6 h-6 rounded-md bg-elevated border border-border-default flex items-center justify-center shrink-0">
                       {row.devedor_tipo === 'PJ' ? <Building2 className="w-3 h-3 text-ink-muted" /> : <User className="w-3 h-3 text-ink-muted" />}
                     </div>
@@ -275,23 +224,20 @@ export function CarteiraClient({ dividas, credores }: Props) {
                           </span>
                         )}
                       </div>
-                      {/* Mobile-only subtitle */}
                       <p className="text-ink-muted text-xs truncate md:hidden">
                         {(row.credor_nome ?? '').replace(' S.A.', '').replace(' Ltda.', '')} · {formatCurrency(row.valor_atualizado)}
                       </p>
                       {row.chave_divida && (
-                        <p className="font-mono text-[10px] text-accent/60 mt-0.5 truncate md:hidden">
-                          {row.chave_divida}
-                        </p>
+                        <p className="font-mono text-[10px] text-accent/60 mt-0.5 truncate md:hidden">{row.chave_divida}</p>
                       )}
                     </div>
-                    {/* Mobile-only status + chevron */}
                     <div className="flex items-center gap-2 md:hidden shrink-0 ml-auto">
                       <StatusBadge status={row.status as StatusDivida} size="sm" />
                       <ChevronRight className="w-4 h-4 text-ink-disabled" />
                     </div>
-                  </div>
-                  {/* Col 2 — Chave (desktop only) */}
+                  </Link>
+
+                  {/* Col 2 — Chave */}
                   <span className="hidden md:flex items-center">
                     <span className="font-mono text-[11px] font-semibold text-white bg-accent/10 border border-accent/20 rounded px-1.5 py-0.5 truncate">
                       {row.chave_divida}
@@ -307,27 +253,34 @@ export function CarteiraClient({ dividas, credores }: Props) {
                       row.faixa_aging === 'critica' ? 'text-red-400' :
                       row.faixa_aging === 'alta'    ? 'text-orange-400' :
                       row.faixa_aging === 'media'   ? 'text-yellow-400' :
-                      row.faixa_aging === 'baixa'   ? 'text-green-400' :
-                      'text-ink-muted'
+                      row.faixa_aging === 'baixa'   ? 'text-green-400' : 'text-ink-muted'
                     }`}>
-                      {row.faixa_aging === 'critica' ? 'Crítica' :
-                       row.faixa_aging === 'alta'    ? 'Alta' :
-                       row.faixa_aging === 'media'   ? 'Média' :
-                       row.faixa_aging === 'baixa'   ? 'Baixa' : 'Em dia'}
+                      {row.faixa_aging === 'critica' ? 'Crítica' : row.faixa_aging === 'alta' ? 'Alta' :
+                       row.faixa_aging === 'media' ? 'Média' : row.faixa_aging === 'baixa' ? 'Baixa' : 'Em dia'}
                     </span>
                     {row.faixa_aging !== 'em_dia' && (
-                      <span className="text-[10px] text-ink-muted font-mono">
-                        {row.dias_atraso}d · {row.comissao_sugerida}%
-                      </span>
+                      <span className="text-[10px] text-ink-muted font-mono">{row.dias_atraso}d · {row.comissao_sugerida}%</span>
                     )}
                   </span>
                   {/* Col 5 — Valor */}
                   <span className="hidden md:block font-mono text-sm font-medium text-ink-primary">{formatCurrency(row.valor_atualizado)}</span>
                   {/* Col 6 — Status */}
                   <span className="hidden md:block"><StatusBadge status={row.status as StatusDivida} size="sm" /></span>
-                  {/* Col 7 — Chevron */}
-                  <ChevronRight className="hidden md:block w-4 h-4 text-ink-disabled group-hover:text-ink-muted transition-colors" />
-                </Link>
+                  {/* Col 7 — Actions */}
+                  <div className="hidden md:flex items-center gap-1 justify-end">
+                    <button
+                      onClick={() => setDeleteDivida(row)}
+                      className="p-1.5 rounded-lg text-ink-muted hover:text-danger hover:bg-danger-dim transition-colors"
+                      title="Excluir dívida"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                    <Link href={`/carteira/${row.devedor_id}`}
+                      className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-elevated transition-colors">
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -340,15 +293,22 @@ export function CarteiraClient({ dividas, credores }: Props) {
         onClose={() => setNovaDividaOpen(false)}
         onSuccess={() => router.refresh()}
       />
-      <NovoDevedorModal
-        open={novoDevedorOpen}
-        onClose={() => setNovoDevedorOpen(false)}
-        onSuccess={() => router.refresh()}
-      />
       <ImportarPlanilhaModal
         open={importarOpen}
         onClose={() => setImportarOpen(false)}
         onSuccess={() => router.refresh()}
+      />
+      <ConfirmModal
+        open={!!deleteDivida}
+        onClose={() => setDeleteDivida(null)}
+        title="Excluir Dívida"
+        description={`Tem certeza que deseja excluir a dívida ${deleteDivida?.chave_divida ?? ''} de ${deleteDivida?.devedor_nome ?? ''}? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        danger
+        onConfirm={async () => {
+          await dividasApi.delete(deleteDivida!.id)
+          router.refresh()
+        }}
       />
     </>
   )

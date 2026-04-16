@@ -78,7 +78,7 @@ def _read_file(upload: UploadFile) -> list[dict]:
     content = upload.file.read()
     filename = (upload.filename or "").lower()
 
-    if filename.endswith(".xlsx") or filename.endswith(".xls"):
+    if filename.endswith(".xlsx"):
         try:
             from openpyxl import load_workbook
             wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
@@ -94,7 +94,25 @@ def _read_file(upload: UploadFile) -> list[dict]:
                 result.append({headers[i]: (str(row[i]).strip() if row[i] is not None else "") for i in range(len(headers))})
             return result
         except Exception as e:
-            raise HTTPException(400, f"Erro ao ler Excel: {e}")
+            raise HTTPException(400, f"Erro ao ler Excel (.xlsx): {e}")
+
+    if filename.endswith(".xls"):
+        try:
+            import xlrd
+            wb = xlrd.open_workbook(file_contents=content)
+            ws = wb.sheet_by_index(0)
+            if ws.nrows == 0:
+                return []
+            headers = [str(ws.cell_value(0, c)).strip().upper() for c in range(ws.ncols)]
+            result = []
+            for r in range(1, ws.nrows):
+                row_vals = [ws.cell_value(r, c) for c in range(ws.ncols)]
+                if all(v == "" or v is None for v in row_vals):
+                    continue
+                result.append({headers[i]: str(row_vals[i]).strip() if row_vals[i] is not None else "" for i in range(len(headers))})
+            return result
+        except Exception as e:
+            raise HTTPException(400, f"Erro ao ler Excel (.xls): {e}")
     else:
         # CSV
         try:

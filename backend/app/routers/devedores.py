@@ -92,6 +92,15 @@ def criar_devedor(payload: DevedorCreate, db: Session = Depends(get_db)):
     return _to_out(d)
 
 
+@router.delete("/{devedor_id}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_devedor(devedor_id: int, db: Session = Depends(get_db)):
+    d = db.query(Devedor).filter(Devedor.id == devedor_id).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Devedor não encontrado")
+    db.delete(d)
+    db.commit()
+
+
 @router.put("/{devedor_id}", response_model=DevedorOut)
 def atualizar_devedor(devedor_id: int, payload: DevedorUpdate, db: Session = Depends(get_db)):
     d = db.query(Devedor).filter(Devedor.id == devedor_id).first()

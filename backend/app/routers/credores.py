@@ -73,6 +73,15 @@ def criar_credor(payload: CredorCreate, db: Session = Depends(get_db)):
     return data
 
 
+@router.delete("/{credor_id}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_credor(credor_id: int, db: Session = Depends(get_db)):
+    credor = db.query(Credor).filter(Credor.id == credor_id).first()
+    if not credor:
+        raise HTTPException(status_code=404, detail="Credor não encontrado")
+    db.delete(credor)
+    db.commit()
+
+
 @router.put("/{credor_id}", response_model=CredorOut)
 def atualizar_credor(credor_id: int, payload: CredorUpdate, db: Session = Depends(get_db)):
     credor = db.query(Credor).filter(Credor.id == credor_id).first()

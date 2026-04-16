@@ -112,3 +112,12 @@ def atualizar_negociacao(neg_id: int, payload: NegociacaoUpdate, db: Session = D
     db.commit()
     db.refresh(n)
     return _enrich(n)
+
+
+@router.delete("/{neg_id}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_negociacao(neg_id: int, db: Session = Depends(get_db)):
+    n = db.query(Negociacao).filter(Negociacao.id == neg_id).first()
+    if not n:
+        raise HTTPException(status_code=404, detail="Negociação não encontrada")
+    db.delete(n)
+    db.commit()

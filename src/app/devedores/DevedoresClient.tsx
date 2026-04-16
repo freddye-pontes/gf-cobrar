@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { NovoDevedorModal } from '@/components/modals/NovoDevedorModal'
+import { ConfirmModal } from '@/components/modals/ConfirmModal'
 import { devedoresApi, type APIDevedor } from '@/lib/api'
 import {
   Search, Plus, User, Building2, Phone, Mail,
-  MapPin, ChevronRight, Pencil, Filter, AlertTriangle, CheckCircle2, X,
+  MapPin, ChevronRight, Pencil, Filter, AlertTriangle, CheckCircle2, X, Trash2,
 } from 'lucide-react'
 
 interface Props {
@@ -54,6 +55,7 @@ export function DevedoresClient({ devedores: initialDevedores }: Props) {
 
   const [novoOpen, setNovoOpen] = useState(false)
   const [editDevedor, setEditDevedor] = useState<APIDevedor | null>(null)
+  const [deleteDevedor, setDeleteDevedor] = useState<APIDevedor | null>(null)
 
   const hasFilters = !!(search || tipoFilter || cadastroFilter)
 
@@ -287,13 +289,20 @@ export function DevedoresClient({ devedores: initialDevedores }: Props) {
                       </div>
 
                       {/* Col 6 — Actions */}
-                      <div className="hidden md:flex items-center gap-1.5 justify-end">
+                      <div className="hidden md:flex items-center gap-1 justify-end">
                         <button
                           onClick={() => setEditDevedor(d)}
                           className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-elevated transition-colors"
                           title="Editar devedor"
                         >
                           <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteDevedor(d)}
+                          className="p-1.5 rounded-lg text-ink-muted hover:text-danger hover:bg-danger-dim transition-colors"
+                          title="Excluir devedor"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                         <Link
                           href={`/carteira/${d.id}`}
@@ -313,12 +322,14 @@ export function DevedoresClient({ devedores: initialDevedores }: Props) {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 ml-auto">
-                          <button
-                            onClick={() => setEditDevedor(d)}
-                            className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-elevated transition-colors"
-                          >
+                        <div className="flex items-center gap-1 ml-auto">
+                          <button onClick={() => setEditDevedor(d)}
+                            className="p-1.5 rounded-lg text-ink-muted hover:text-ink-primary hover:bg-elevated transition-colors">
                             <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => setDeleteDevedor(d)}
+                            className="p-1.5 rounded-lg text-ink-muted hover:text-danger hover:bg-danger-dim transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                           <Link href={`/carteira/${d.id}`}
                             className="p-1.5 rounded-lg text-ink-muted hover:text-accent-light hover:bg-elevated transition-colors">
@@ -349,6 +360,20 @@ export function DevedoresClient({ devedores: initialDevedores }: Props) {
           devedor={editDevedor as any}
         />
       )}
+
+      <ConfirmModal
+        open={!!deleteDevedor}
+        onClose={() => setDeleteDevedor(null)}
+        title="Excluir Devedor"
+        description={`Tem certeza que deseja excluir "${deleteDevedor?.nome}"? Todas as dívidas associadas também serão excluídas. Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        danger
+        onConfirm={async () => {
+          await devedoresApi.delete(deleteDevedor!.id)
+          setDevedores((prev) => prev.filter((d) => d.id !== deleteDevedor!.id))
+          router.refresh()
+        }}
+      />
     </>
   )
 }

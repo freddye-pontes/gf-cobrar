@@ -35,6 +35,14 @@ async function put<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>
 }
 
+async function del(path: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'DELETE' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as any).detail ?? `API DELETE ${path} → ${res.status}`)
+  }
+}
+
 async function patch<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'PATCH',
@@ -224,6 +232,7 @@ export const dividasApi = {
     put<APIDividaOut>(`/dividas/${id}/status/`, body),
   addHistorico: (id: number, body: { canal: string; resultado: string; operador_nome?: string }) =>
     post<APIHistoricoContato>(`/dividas/${id}/historico/`, body),
+  delete: (id: number) => del(`/dividas/${id}`),
 }
 
 // ── Devedores ─────────────────────────────────────────────────────────────────
@@ -244,6 +253,7 @@ export const devedoresApi = {
   update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}/`, body),
   patchStatusCadastro: (id: number) =>
     patch<APIDevedor>(`/devedores/${id}/status-cadastro`),
+  delete: (id: number) => del(`/devedores/${id}`),
 }
 
 // ── Credores ──────────────────────────────────────────────────────────────────
@@ -253,6 +263,7 @@ export const credoresApi = {
   get: (id: number) => get<APICredorOut>(`/credores/${id}`),
   create: (body: unknown) => post<APICredorOut>('/credores/', body),
   update: (id: number, body: unknown) => put<APICredorOut>(`/credores/${id}/`, body),
+  delete: (id: number) => del(`/credores/${id}`),
 }
 
 // ── Negociações ───────────────────────────────────────────────────────────────
@@ -265,6 +276,7 @@ export const negociacoesApi = {
   get: (id: number) => get<APINegociacaoOut>(`/negociacoes/${id}`),
   create: (body: unknown) => post<APINegociacaoOut>('/negociacoes/', body),
   update: (id: number, body: unknown) => put<APINegociacaoOut>(`/negociacoes/${id}/`, body),
+  delete: (id: number) => del(`/negociacoes/${id}`),
 }
 
 // ── Repasses ──────────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ import { formatCurrency, formatDate, getTipoNegociacaoLabel } from '@/lib/utils'
 import { negociacoesApi, type APINegociacaoOut } from '@/lib/api'
 import {
   CheckCircle2, XCircle, Clock,
-  User, Building2, ChevronDown, ChevronUp, Plus,
+  User, Building2, ChevronDown, ChevronUp, Plus, Trash2,
 } from 'lucide-react'
 import type { StatusDivida } from '@/lib/types'
 
@@ -33,6 +33,7 @@ export function NegociacaoClient({ negociacoes }: Props) {
   const [novaOpen, setNovaOpen] = useState(false)
   const [confirmPago, setConfirmPago] = useState<APINegociacaoOut | null>(null)
   const [confirmQuebrada, setConfirmQuebrada] = useState<APINegociacaoOut | null>(null)
+  const [deleteNeg, setDeleteNeg] = useState<APINegociacaoOut | null>(null)
 
   const refresh = () => router.refresh()
 
@@ -185,24 +186,33 @@ export function NegociacaoClient({ negociacoes }: Props) {
                             <p className="text-ink-secondary text-xs leading-relaxed">{neg.notas}</p>
                           </div>
                         )}
-                        {neg.status === 'ativa' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setConfirmPago(neg) }}
-                              className="flex-1 flex items-center justify-center gap-2 bg-emerald-dim border border-emerald/20 text-emerald rounded-lg py-2 text-sm font-medium hover:bg-emerald/20 transition-colors"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                              Confirmar Pagamento
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setConfirmQuebrada(neg) }}
-                              className="flex items-center justify-center gap-2 bg-danger-dim border border-danger/20 text-danger rounded-lg py-2 px-4 text-sm font-medium hover:bg-danger/20 transition-colors"
-                            >
-                              <XCircle className="w-4 h-4" />
-                              Quebrou PTP
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex gap-2">
+                          {neg.status === 'ativa' && (
+                            <>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setConfirmPago(neg) }}
+                                className="flex-1 flex items-center justify-center gap-2 bg-emerald-dim border border-emerald/20 text-emerald rounded-lg py-2 text-sm font-medium hover:bg-emerald/20 transition-colors"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                                Confirmar Pagamento
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setConfirmQuebrada(neg) }}
+                                className="flex items-center justify-center gap-2 bg-danger-dim border border-danger/20 text-danger rounded-lg py-2 px-4 text-sm font-medium hover:bg-danger/20 transition-colors"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                Quebrou PTP
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteNeg(neg) }}
+                            className="flex items-center justify-center gap-1.5 border border-border-default text-ink-muted rounded-lg py-2 px-3 text-sm hover:text-danger hover:border-danger/30 hover:bg-danger-dim transition-colors"
+                            title="Excluir negociação"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -241,6 +251,19 @@ export function NegociacaoClient({ negociacoes }: Props) {
         danger
         onConfirm={async () => {
           await negociacoesApi.update(confirmQuebrada!.id, { status: 'quebrada' })
+          refresh()
+        }}
+      />
+
+      <ConfirmModal
+        open={Boolean(deleteNeg)}
+        onClose={() => setDeleteNeg(null)}
+        title="Excluir Negociação"
+        description={`Tem certeza que deseja excluir a negociação de ${deleteNeg?.devedor_nome ?? 'este devedor'}? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        danger
+        onConfirm={async () => {
+          await negociacoesApi.delete(deleteNeg!.id)
           refresh()
         }}
       />

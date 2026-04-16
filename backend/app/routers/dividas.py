@@ -213,6 +213,15 @@ def atualizar_status(divida_id: int, payload: StatusUpdate, db: Session = Depend
     return _build_full_out(d)
 
 
+@router.delete("/{divida_id}", status_code=status.HTTP_204_NO_CONTENT)
+def deletar_divida(divida_id: int, db: Session = Depends(get_db)):
+    d = db.query(Divida).filter(Divida.id == divida_id).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Dívida não encontrada")
+    db.delete(d)
+    db.commit()
+
+
 @router.post("/{divida_id}/historico", response_model=HistoricoContatoOut, status_code=201)
 def registrar_contato(
     divida_id: int, payload: HistoricoContatoCreate, db: Session = Depends(get_db)
