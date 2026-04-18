@@ -184,7 +184,28 @@ def download_template():
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     ws.append(TEMPLATE_HEADERS)
-    ws.append(TEMPLATE_EXAMPLE)
+
+    # Write example row manually so we can type numeric cells correctly
+    # TEMPLATE_HEADERS indices (1-based): VALOR_ORIGINAL=9, VALOR_ATUALIZADO=10
+    CURRENCY_COLS = {9, 10}
+    CURRENCY_FMT = '#,##0.00'   # Excel uses locale separators — shows as 4.500,00 in pt-BR
+
+    example_values = [
+        "EXT-2026-001",
+        "João Carlos Almeida",
+        "123.456.789-00",
+        "PF",
+        "joao@email.com",
+        "(11) 98765-4321",
+        "Banco Meridional S.A.",
+        "boleto",
+        4500.00,    # VALOR_ORIGINAL  — numeric
+        5200.00,    # VALOR_ATUALIZADO — numeric
+        "2025-01-15",
+        "2025-03-01",
+        "BOL-2025-0001",
+    ]
+    ws.append(example_values)
 
     # Style header row
     for col_idx, _ in enumerate(TEMPLATE_HEADERS, start=1):
@@ -197,12 +218,14 @@ def download_template():
     # Style example row
     example_fill = PatternFill(fill_type="solid", fgColor="F0F4F8")
     example_font = Font(color="444444", size=10, italic=True)
-    for col_idx in range(1, len(TEMPLATE_EXAMPLE) + 1):
+    for col_idx in range(1, len(example_values) + 1):
         cell = ws.cell(row=2, column=col_idx)
         cell.fill = example_fill
         cell.font = example_font
         cell.alignment = Alignment(horizontal="left", vertical="center")
         cell.border = border
+        if col_idx in CURRENCY_COLS:
+            cell.number_format = CURRENCY_FMT
 
     # Column widths
     col_widths = [16, 24, 18, 12, 24, 18, 28, 14, 16, 18, 14, 16, 20]
