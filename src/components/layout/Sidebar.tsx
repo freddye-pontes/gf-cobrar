@@ -16,6 +16,7 @@ import {
   Bell,
   Menu,
   X,
+  FileBarChart2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -26,8 +27,9 @@ const navItems = [
   { href: '/carteira',   label: 'Carteira',   icon: Users,           badge: '10' },
   { href: '/regua',      label: 'Régua',      icon: GitBranch,       badge: null },
   { href: '/negociacao', label: 'Negociação', icon: Handshake,       badge: '4'  },
-  { href: '/credores',   label: 'Credores',   icon: Building2,       badge: null },
-  { href: '/portal',     label: 'Portal Credor', icon: ExternalLink, badge: null },
+  { href: '/credores',    label: 'Credores',      icon: Building2,       badge: null },
+  { href: '/relatorios',  label: 'Relatórios',    icon: FileBarChart2,   badge: null },
+  { href: '/portal',      label: 'Portal Credor', icon: ExternalLink,    badge: null },
 ]
 
 export function Sidebar() {
