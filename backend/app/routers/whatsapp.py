@@ -5,17 +5,18 @@ POST /whatsapp/enviar/{divida_id}         — disparo manual de 1 dívida
 POST /whatsapp/disparar-lote              — disparo em lote (régua automática)
 GET  /whatsapp/status                     — status da instância conectada
 GET  /whatsapp/historico/{divida_id}      — histórico de mensagens enviadas
+POST /whatsapp/webhook                    — recebe eventos da Evolution API (respostas dos devedores)
 """
 import os
 import httpx
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
-from app.database import get_db
+from app.database import get_db, DATABASE_URL
 from app.models.divida import Divida, HistoricoContato
 from app.models.devedor import Devedor
 
@@ -304,6 +305,145 @@ def disparar_lote(
         "detalhes_agendados": agendados,
         "detalhes_ignorados": ignorados,
     }
+
+
+def _resposta_sim(devedor_nome: str, valor: float, credor_nome: str) -> str:
+    primeiro_nome = devedor_nome.split()[0].title()
+    return (
+        f"Ótimo, {primeiro_nome}! 😊 Vamos resolver isso juntos.\n\n"
+        f"*Opções disponíveis para sua dívida de {_formatar_valor(valor)} com {credor_nome}:*\n\n"
+        f"1️⃣ *À vista* — desconto especial\n"
+        f"2️⃣ *Parcelado* — até 12x sem juros\n"
+        f"3️⃣ *Entrada + parcelas* — entrada reduzida\n\n"
+        f"Responda o número da opção desejada e um especialista entrará em contato "
+        f"em até 30 minutos para finalizar o acordo. 👍"
+    )
+
+
+def _resposta_nao(devedor_nome: str) -> str:
+    primeiro_nome = devedor_nome.split()[0].title()
+    return (
+        f"Entendido, {primeiro_nome}. Obrigado pelo retorno! ✅\n\n"
+        f"Caso precise de qualquer informação ou queira regularizar futuramente, "
+        f"é só entrar em contato. Tenha um ótimo dia! 😊"
+    )
+
+
+def _resposta_opcao_negociacao(devedor_nome: str, opcao: str) -> str:
+    primeiro_nome = devedor_nome.split()[0].title()
+    opcoes = {"1": "à vista", "2": "parcelado em até 12x", "3": "com entrada reduzida"}
+    desc = opcoes.get(opcao, "personalizada")
+    return (
+        f"Perfeito, {primeiro_nome}! Anotei sua preferência: *pagamento {desc}*. 📋\n\n"
+        f"Um especialista da GF Recebíveis entrará em contato em breve "
+        f"para confirmar os detalhes e enviar o acordo formal.\n\n"
+        f"Aguarde nosso contato! 🤝"
+    )
+
+
+def _limpar_numero(jid: str) -> str:
+    return jid.replace("@s.whatsapp.net", "").replace("@c.us", "")
+
+
+def _processar_webhook_background(payload: dict, db_url: str):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    engine = create_engine(db_url)
+    SessionLocal = sessionmaker(bind=engine)
+    db = SessionLocal()
+    try:
+        # Extrai dados da mensagem recebida
+        data = payload.get("data", {})
+        key = data.get("key", {})
+
+        # Ignora mensagens enviadas pelo próprio sistema
+        if key.get("fromMe"):
+            return
+
+        remote_jid = key.get("remoteJid", "")
+        numero_limpo = _limpar_numero(remote_jid)
+
+        # Extrai texto da mensagem
+        msg = data.get("message", {})
+        texto = (
+            msg.get("conversation")
+            or msg.get("extendedTextMessage", {}).get("text")
+            or ""
+        ).strip().upper()
+
+        if not texto or not numero_limpo:
+            return
+
+        # Busca devedor pelo telefone (normaliza para apenas dígitos)
+        devedores = db.query(Devedor).all()
+        devedor = None
+        for dev in devedores:
+            for tel in (dev.telefones or []):
+                digits = "".join(c for c in tel if c.isdigit())
+                if digits.endswith(numero_limpo[-8:]):
+                    devedor = dev
+                    break
+            if devedor:
+                break
+
+        if not devedor:
+            return
+
+        # Pega a dívida em aberto mais recente deste devedor
+        divida = (
+            db.query(Divida)
+            .options(joinedload(Divida.credor))
+            .filter(
+                Divida.devedor_id == devedor.id,
+                Divida.status.in_(["em_aberto", "em_negociacao", "ptp_ativa"]),
+            )
+            .order_by(Divida.created_at.desc())
+            .first()
+        )
+        if not divida:
+            return
+
+        credor_nome = divida.credor.razao_social if divida.credor else "Credor"
+        valor = float(divida.valor_atualizado)
+        resposta = None
+
+        if texto in ("SIM", "S", "QUERO NEGOCIAR", "NEGOCIAR", "1", "2", "3"):
+            if texto in ("1", "2", "3"):
+                resposta = _resposta_opcao_negociacao(devedor.nome, texto)
+                if divida.status == "em_aberto":
+                    divida.status = "em_negociacao"
+            else:
+                resposta = _resposta_sim(devedor.nome, valor, credor_nome)
+                if divida.status == "em_aberto":
+                    divida.status = "em_negociacao"
+        elif texto in ("NÃO", "NAO", "N", "JA PAGUEI", "JÁ PAGUEI"):
+            resposta = _resposta_nao(devedor.nome)
+
+        if resposta:
+            _enviar_whatsapp(numero_limpo, resposta)
+            historico = HistoricoContato(
+                divida_id=divida.id,
+                data=date.today(),
+                canal="whatsapp",
+                resultado=f"[resposta-auto] recebeu '{texto}', respondeu automaticamente",
+                operador_nome="Bot",
+            )
+            db.add(historico)
+            divida.ultimo_contato = date.today()
+            db.commit()
+    except Exception:
+        pass
+    finally:
+        db.close()
+
+
+@router.post("/webhook")
+async def webhook_receber(request: Request, background_tasks: BackgroundTasks):
+    payload = await request.json()
+    event = payload.get("event", "")
+    if event == "messages.upsert":
+        background_tasks.add_task(_processar_webhook_background, payload, DATABASE_URL)
+    return {"ok": True}
 
 
 @router.get("/historico/{divida_id}")
