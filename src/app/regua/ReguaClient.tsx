@@ -7,14 +7,7 @@ import {
   ChevronRight, Plus, Settings2, Check, Gavel,
 } from 'lucide-react'
 import type { APICredorOut } from '@/lib/api'
-
-interface RegraEtapa {
-  dia: number
-  acao: string
-  canal: 'whatsapp' | 'email' | 'telefone' | 'escalamento'
-  descricao: string
-  automatico: boolean
-}
+import { EditarReguaModal, type RegraEtapa } from '@/components/modals/EditarReguaModal'
 
 const regrasPadrao: RegraEtapa[] = [
   { dia: 0, acao: 'Importação', canal: 'escalamento', descricao: 'Dívida importada ao sistema e indexada na carteira', automatico: true },
@@ -39,6 +32,8 @@ interface Props {
 export function ReguaClient({ credores }: Props) {
   const [selectedCredorId, setSelectedCredorId] = useState(credores[0]?.id ?? 0)
   const credor = credores.find((c) => c.id === selectedCredorId) ?? credores[0]
+  const [editarOpen, setEditarOpen] = useState(false)
+  const [etapas, setEtapas] = useState<RegraEtapa[]>(regrasPadrao)
 
   return (
     <AppLayout>
@@ -63,7 +58,9 @@ export function ReguaClient({ credores }: Props) {
                   <option key={c.id} value={c.id}>{c.razao_social}</option>
                 ))}
               </select>
-              <button className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2">
+              <button
+                onClick={() => setEditarOpen(true)}
+                className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2">
                 <Settings2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Editar Régua</span>
               </button>
@@ -140,7 +137,7 @@ export function ReguaClient({ credores }: Props) {
           <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '160ms', opacity: 0 }}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
               <h3 className="font-display font-semibold text-ink-primary text-sm">Fluxo de Etapas</h3>
-              <button className="flex items-center gap-1.5 text-accent-light text-xs hover:text-accent transition-colors">
+              <button onClick={() => setEditarOpen(true)} className="flex items-center gap-1.5 text-accent-light text-xs hover:text-accent transition-colors">
                 <Plus className="w-3.5 h-3.5" />
                 Adicionar Etapa
               </button>
@@ -150,7 +147,7 @@ export function ReguaClient({ credores }: Props) {
               <div className="relative">
                 <div className="absolute left-[18px] top-0 bottom-0 w-px bg-border-default" />
                 <div className="space-y-1">
-                  {regrasPadrao.map((etapa, i) => {
+                  {etapas.map((etapa, i) => {
                     const cfg = canalConfig[etapa.canal]
                     const Icon = cfg.icon
                     return (
@@ -197,6 +194,14 @@ export function ReguaClient({ credores }: Props) {
           </div>
         </div>
       </div>
+
+      <EditarReguaModal
+        open={editarOpen}
+        onClose={() => setEditarOpen(false)}
+        etapas={etapas}
+        credorNome={credor?.razao_social ?? ''}
+        onSave={(novasEtapas) => setEtapas(novasEtapas)}
+      />
     </AppLayout>
   )
 }
