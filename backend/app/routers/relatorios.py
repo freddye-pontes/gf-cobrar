@@ -116,9 +116,9 @@ def relatorio_repasses(
             "id": r.id,
             "credor_nome": r.credor.razao_social if r.credor else "",
             "periodo": r.periodo,
-            "valor_bruto": r.valor_bruto,
-            "comissao": r.comissao,
-            "valor_liquido": r.valor_liquido,
+            "valor_bruto": float(r.valor_bruto),
+            "comissao": float(r.comissao),
+            "valor_liquido": float(r.valor_liquido),
             "status": r.status,
             "created_at": r.created_at.strftime("%d/%m/%Y") if r.created_at else "",
             "executado_em": r.executado_em.strftime("%d/%m/%Y") if r.executado_em else "",
@@ -194,10 +194,10 @@ def relatorio_comissoes(
     for r in rows:
         cid = r.credor_id
         by_credor[cid]["credor_nome"] = r.credor.razao_social if r.credor else str(cid)
-        by_credor[cid]["comissao_pct"] = r.credor.comissao_percentual if r.credor else 0
-        by_credor[cid]["valor_bruto"] += r.valor_bruto
-        by_credor[cid]["comissao"] += r.comissao
-        by_credor[cid]["valor_liquido"] += r.valor_liquido
+        by_credor[cid]["comissao_pct"] = float(r.credor.comissao_percentual) if r.credor else 0.0
+        by_credor[cid]["valor_bruto"] += float(r.valor_bruto)
+        by_credor[cid]["comissao"] += float(r.comissao)
+        by_credor[cid]["valor_liquido"] += float(r.valor_liquido)
         by_credor[cid]["qtd_lotes"] += 1
         by_credor[cid]["periodos"].add(r.periodo)
 
@@ -287,12 +287,13 @@ def relatorio_recuperado(
     })
     for d in dividas:
         cid = d.credor_id
+        pct = float(d.credor.comissao_percentual) if d.credor else 0.0
         by_credor[cid]["credor_nome"] = d.credor.razao_social if d.credor else str(cid)
-        by_credor[cid]["comissao_pct"] = d.credor.comissao_percentual if d.credor else 0
+        by_credor[cid]["comissao_pct"] = pct
         by_credor[cid]["qtd_dividas"] += 1
-        by_credor[cid]["valor_original"] += d.valor_original
-        by_credor[cid]["valor_recuperado"] += d.valor_atualizado
-        by_credor[cid]["comissao_estimada"] += d.valor_atualizado * (d.credor.comissao_percentual / 100 if d.credor else 0)
+        by_credor[cid]["valor_original"] += float(d.valor_original)
+        by_credor[cid]["valor_recuperado"] += float(d.valor_atualizado)
+        by_credor[cid]["comissao_estimada"] += float(d.valor_atualizado) * (pct / 100)
 
     data = []
     for v in by_credor.values():
