@@ -439,9 +439,13 @@ def _processar_webhook_background(payload: dict, db_url: str):
 
 @router.post("/webhook")
 async def webhook_receber(request: Request, background_tasks: BackgroundTasks):
-    payload = await request.json()
-    event = payload.get("event", "")
-    if event == "messages.upsert":
+    try:
+        payload = await request.json()
+    except Exception:
+        return {"ok": True}
+    event = payload.get("event", "").lower().replace(".", "_").replace("-", "_")
+    # aceita messages_upsert, MESSAGES_UPSERT, messages.upsert, etc.
+    if "messages" in event and "upsert" in event:
         background_tasks.add_task(_processar_webhook_background, payload, DATABASE_URL)
     return {"ok": True}
 
