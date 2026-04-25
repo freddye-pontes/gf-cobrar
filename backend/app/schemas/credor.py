@@ -3,6 +3,12 @@ from datetime import datetime
 from typing import Optional
 
 
+class FaixaAging(BaseModel):
+    faixa: str          # baixa | media | alta | critica
+    ate_dias: Optional[int] = None   # None = sem limite (última faixa)
+    comissao: float
+
+
 class CredorBase(BaseModel):
     razao_social: str
     cnpj: str
@@ -13,6 +19,7 @@ class CredorBase(BaseModel):
     limite_desconto: float = 0.0
     observacao: Optional[str] = None
     ativo: bool = True
+    regua_aging: Optional[list[FaixaAging]] = None
 
 
 class CredorCreate(CredorBase):
@@ -29,6 +36,7 @@ class CredorUpdate(BaseModel):
     limite_desconto: Optional[float] = None
     observacao: Optional[str] = None
     ativo: Optional[bool] = None
+    regua_aging: Optional[list[FaixaAging]] = None
 
 
 class CredorOut(CredorBase):
@@ -37,6 +45,7 @@ class CredorOut(CredorBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    regua_aging: Optional[list] = None
 
     # Computed fields (calculated from dividas)
     total_carteira: float = 0.0
@@ -54,5 +63,6 @@ class CredorListOut(BaseModel):
     comissao_percentual: float
     limite_desconto: float
     ativo: bool
+    regua_aging: Optional[list] = None
     total_carteira: float = 0.0
     total_recuperado: float = 0.0

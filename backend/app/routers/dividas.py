@@ -4,6 +4,7 @@ from datetime import date
 
 from app.database import get_db
 from app.models import Divida, HistoricoContato, Devedor, Credor
+from app.models.credor import REGUA_AGING_PADRAO
 from app.schemas.divida import (
     DividaCreate, DividaUpdate, DividaOut, DividaListOut,
     HistoricoContatoCreate, HistoricoContatoOut, StatusUpdate,
@@ -12,27 +13,28 @@ from app.schemas.divida import (
 router = APIRouter(prefix="/dividas", tags=["dividas"])
 
 
-def _calcular_aging(data_vencimento: date) -> tuple[int, str, float]:
+def _calcular_aging(
+    data_vencimento: date,
+    regua: list | None = None,
+) -> tuple[int, str, float]:
     """Returns (dias_atraso, faixa_aging, comissao_sugerida).
 
-    Aging buckets:
-      ≤ 0 days   → em_dia   →  0%
-      1–30 days  → baixa    → 10%
-      31–90 days → media    → 15%
-      91–180days → alta     → 25%
-      > 180 days → critica  → 30%
+    Uses credor-specific regua_aging if provided, otherwise falls back to
+    REGUA_AGING_PADRAO. Each tier: {faixa, ate_dias (None = ∞), comissao}.
     """
     dias = (date.today() - data_vencimento).days
     if dias <= 0:
         return 0, "em_dia", 0.0
-    elif dias <= 30:
-        return dias, "baixa", 10.0
-    elif dias <= 90:
-        return dias, "media", 15.0
-    elif dias <= 180:
-        return dias, "alta", 25.0
-    else:
-        return dias, "critica", 30.0
+
+    tiers = regua if regua else REGUA_AGING_PADRAO
+    for tier in sorted(tiers, key=lambda t: t.get("ate_dias") or 99999):
+        ate = tier.get("ate_dias")
+        if ate is None or dias <= ate:
+            return dias, tier["faixa"], float(tier["comissao"])
+
+    # fallback: last tier
+    last = tiers[-1]
+    return dias, last["faixa"], float(last["comissao"])
 
 STATUS_TRANSITIONS = {
     "em_aberto": ["em_negociacao", "ptp_ativa", "pago", "judicial", "encerrado"],
@@ -53,7 +55,18 @@ STATUS_ACOES = {
 }
 
 
-def _build_list_out(d: Divida) -> DividaListOut:
+def _aplicar_aging(d: Divida, db: Session | None = None) -> tuple[int, str, float]:
+    """Calculates aging using credor's regua_aging, persists comissao_percentual."""
+    regua = d.credor.regua_aging if d.credor else None
+    dias, faixa, comissao = _calcular_aging(d.data_vencimento, regua)
+    # Persist the current applicable commission rate on the divida
+    if db and d.status not in ("pago", "encerrado") and float(d.comissao_percentual or 0) != comissao:
+        d.comissao_percentual = comissao
+        db.add(d)
+    return dias, faixa, comissao
+
+
+def _build_list_out(d: Divida, db: Session | None = None) -> DividaListOut:
     out = DividaListOut.model_validate(d)
     if d.devedor:
         out.devedor_nome = d.devedor.nome
@@ -63,19 +76,20 @@ def _build_list_out(d: Divida) -> DividaListOut:
     if d.historico:
         ultimo = max(d.historico, key=lambda h: h.data)
         out.ultimo_canal = ultimo.canal
-    out.dias_atraso, out.faixa_aging, out.comissao_sugerida = _calcular_aging(d.data_vencimento)
+    out.dias_atraso, out.faixa_aging, out.comissao_sugerida = _aplicar_aging(d, db)
     if d.devedor:
         out.devedor_cadastro_status = d.devedor.cadastro_status
     return out
 
 
-def _build_full_out(d: Divida) -> DividaOut:
+def _build_full_out(d: Divida, db: Session | None = None) -> DividaOut:
     out = DividaOut.model_validate(d)
     if d.devedor:
         out.devedor_nome = d.devedor.nome
         out.devedor_tipo = d.devedor.tipo
     if d.credor:
         out.credor_nome = d.credor.razao_social
+    out.dias_atraso, out.faixa_aging, out.comissao_sugerida = _aplicar_aging(d, db)
     out.historico = [HistoricoContatoOut.model_validate(h) for h in d.historico]
     return out
 
@@ -104,7 +118,10 @@ def listar_dividas(
         q = q.filter(Divida.credor_id == credor_id)
     if devedor_id:
         q = q.filter(Divida.devedor_id == devedor_id)
-    return [_build_list_out(d) for d in q.offset(skip).limit(limit).all()]
+    items = q.offset(skip).limit(limit).all()
+    result = [_build_list_out(d, db) for d in items]
+    db.commit()
+    return result
 
 
 @router.get("/work-queue", response_model=list[DividaListOut])
@@ -133,7 +150,9 @@ def work_queue(db: Session = Depends(get_db)):
         .limit(50)
         .all()
     )
-    return [_build_list_out(d) for d in dividas]
+    result = [_build_list_out(d, db) for d in dividas]
+    db.commit()
+    return result
 
 
 @router.get("/{divida_id}", response_model=DividaOut)
@@ -150,7 +169,9 @@ def get_divida(divida_id: int, db: Session = Depends(get_db)):
     )
     if not d:
         raise HTTPException(status_code=404, detail="Dívida não encontrada")
-    return _build_full_out(d)
+    result = _build_full_out(d, db)
+    db.commit()
+    return result
 
 
 @router.post("/", response_model=DividaOut, status_code=status.HTTP_201_CREATED)
@@ -164,12 +185,14 @@ def criar_divida(payload: DividaCreate, db: Session = Depends(get_db)):
 
     d = Divida(**payload.model_dump(), chave_divida="TMP")
     db.add(d)
-    db.flush()  # get d.id
+    db.flush()
 
-    # Generate immutable internal key: GFD-YYYYMMDD-000001
     d.chave_divida = f"GFD-{date.today().strftime('%Y%m%d')}-{d.id:06d}"
 
-    # Immutable history record — creation event
+    # Set initial commission based on aging
+    _, _, comissao = _calcular_aging(d.data_vencimento, credor.regua_aging if credor else None)
+    d.comissao_percentual = comissao
+
     h = HistoricoContato(
         divida_id=d.id,
         data=date.today(),

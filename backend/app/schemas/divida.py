@@ -78,10 +78,11 @@ class DividaListOut(BaseModel):
     devedor_tipo: Optional[str] = None
     ultimo_canal: Optional[str] = None
 
-    # Aging (calculated in router)
+    # Aging (calculated in router, comissao_percentual persisted on model)
+    comissao_percentual: Optional[float] = None
     dias_atraso: int = 0
     faixa_aging: str = "em_dia"        # em_dia | baixa | media | alta | critica
-    comissao_sugerida: float = 0.0
+    comissao_sugerida: float = 0.0     # same as comissao_percentual, kept for compat
 
     # Devedor cadastro status (joined from devedor)
     devedor_cadastro_status: str = "COMPLETO"
