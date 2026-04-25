@@ -250,7 +250,7 @@ export const devedoresApi = {
   buscarDocumento: (cpfCnpj: string) =>
     get<APIDevedor>(`/devedores/buscar-documento/${cpfCnpj.replace(/\D/g, '')}`),
   create: (body: unknown) => post<APIDevedor>('/devedores/', body),
-  update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}/`, body),
+  update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}`, body),
   patchStatusCadastro: (id: number) =>
     patch<APIDevedor>(`/devedores/${id}/status-cadastro`),
   delete: (id: number) => del(`/devedores/${id}`),
@@ -262,7 +262,7 @@ export const credoresApi = {
   list: () => get<APICredorOut[]>('/credores'),
   get: (id: number) => get<APICredorOut>(`/credores/${id}`),
   create: (body: unknown) => post<APICredorOut>('/credores/', body),
-  update: (id: number, body: unknown) => put<APICredorOut>(`/credores/${id}/`, body),
+  update: (id: number, body: unknown) => put<APICredorOut>(`/credores/${id}`, body),
   delete: (id: number) => del(`/credores/${id}`),
 }
 
@@ -275,7 +275,7 @@ export const negociacoesApi = {
   },
   get: (id: number) => get<APINegociacaoOut>(`/negociacoes/${id}`),
   create: (body: unknown) => post<APINegociacaoOut>('/negociacoes/', body),
-  update: (id: number, body: unknown) => put<APINegociacaoOut>(`/negociacoes/${id}/`, body),
+  update: (id: number, body: unknown) => put<APINegociacaoOut>(`/negociacoes/${id}`, body),
   delete: (id: number) => del(`/negociacoes/${id}`),
 }
 
