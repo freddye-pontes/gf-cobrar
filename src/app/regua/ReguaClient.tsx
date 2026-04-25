@@ -171,7 +171,10 @@ export function ReguaClient({ credores }: Props) {
                           </div>
                           <p className="text-ink-muted text-xs mt-1">{etapa.descricao}</p>
                         </div>
-                        <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md bg-elevated border border-border-default text-ink-muted hover:text-ink-secondary mt-1 shrink-0">
+                        <button
+                          onClick={() => setEditarOpen(true)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md bg-elevated border border-border-default text-ink-muted hover:text-ink-secondary mt-1 shrink-0"
+                        >
                           <Settings2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
