@@ -344,3 +344,171 @@ def relatorio_recuperado(
     ], currency_cols)
 
     return _xlsx_response(wb, f"relatorio_recuperado_{date.today()}.xlsx")
+
+
+# ── Comissão Preview (dívidas pagas ainda não em repasse) ──────────────────────
+
+@router.get("/comissao/preview")
+def preview_comissao(
+    credor_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    """Dívidas pagas que ainda não foram incluídas em nenhum lote de repasse."""
+    from app.models.devedor import Devedor
+
+    # Busca todos os dividas_ids já incluídos em repasses
+    repasses = db.query(Repasse).all()
+    ids_em_repasse: set[str] = set()
+    for r in repasses:
+        for did in (r.dividas_ids or []):
+            ids_em_repasse.add(str(did))
+
+    q = (
+        db.query(Divida)
+        .options(joinedload(Divida.credor), joinedload(Divida.devedor))
+        .filter(Divida.status == "pago")
+    )
+    if credor_id:
+        q = q.filter(Divida.credor_id == credor_id)
+
+    dividas = q.all()
+
+    from collections import defaultdict
+    by_credor: dict[int, dict] = defaultdict(lambda: {
+        "credor_nome": "", "comissao_pct": 0.0,
+        "qtd_dividas": 0, "valor_bruto": 0.0, "comissao": 0.0, "valor_liquido": 0.0,
+        "dividas": [],
+    })
+
+    for d in dividas:
+        if str(d.id) in ids_em_repasse:
+            continue
+        cid = d.credor_id
+        pct = float(d.comissao_percentual or (d.credor.comissao_percentual if d.credor else 0) or 0)
+        base = float(d.valor_negociado or d.valor_atualizado)
+        comissao_div = round(base * (pct / 100), 2)
+
+        by_credor[cid]["credor_nome"] = d.credor.razao_social if d.credor else str(cid)
+        by_credor[cid]["comissao_pct"] = pct
+        by_credor[cid]["qtd_dividas"] += 1
+        by_credor[cid]["valor_bruto"] += base
+        by_credor[cid]["comissao"] += comissao_div
+        by_credor[cid]["valor_liquido"] += base - comissao_div
+        by_credor[cid]["dividas"].append({
+            "id": d.id,
+            "chave_divida": d.chave_divida,
+            "devedor_nome": d.devedor.nome if d.devedor else "",
+            "valor_original": float(d.valor_original),
+            "valor_negociado": float(d.valor_negociado or d.valor_atualizado),
+            "desconto_aplicado": float(d.desconto_aplicado or 0),
+            "comissao_percentual": pct,
+            "comissao_valor": comissao_div,
+            "valor_repasse": float(d.valor_negociado or d.valor_atualizado) - comissao_div,
+            "data_pagamento": d.data_pagamento_confirmado.isoformat() if d.data_pagamento_confirmado else None,
+        })
+
+    return [
+        {
+            "credor_id": cid,
+            "credor_nome": v["credor_nome"],
+            "comissao_pct": v["comissao_pct"],
+            "qtd_dividas": v["qtd_dividas"],
+            "valor_bruto": round(v["valor_bruto"], 2),
+            "comissao": round(v["comissao"], 2),
+            "valor_liquido": round(v["valor_liquido"], 2),
+            "dividas": v["dividas"],
+        }
+        for cid, v in by_credor.items()
+    ]
+
+
+# ── Relatório Repasses Detalhado ───────────────────────────────────────────────
+
+@router.get("/repasses/detalhado")
+def relatorio_repasses_detalhado(
+    credor_id: Optional[int] = Query(None),
+    repasse_id: Optional[int] = Query(None),
+    periodo_de: Optional[str] = Query(None),
+    periodo_ate: Optional[str] = Query(None),
+    format: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
+    from app.models.devedor import Devedor
+
+    q = db.query(Repasse).options(joinedload(Repasse.credor)).order_by(Repasse.created_at.desc())
+    if credor_id:
+        q = q.filter(Repasse.credor_id == credor_id)
+    if repasse_id:
+        q = q.filter(Repasse.id == repasse_id)
+    if periodo_de:
+        q = q.filter(Repasse.periodo >= periodo_de)
+    if periodo_ate:
+        q = q.filter(Repasse.periodo <= periodo_ate)
+
+    repasses = q.all()
+
+    rows = []
+    for r in repasses:
+        divida_ids = [int(x) for x in (r.dividas_ids or []) if str(x).isdigit()]
+        dividas = (
+            db.query(Divida)
+            .options(joinedload(Divida.devedor), joinedload(Divida.credor))
+            .filter(Divida.id.in_(divida_ids))
+            .all()
+        ) if divida_ids else []
+
+        for d in dividas:
+            pct = float(d.comissao_percentual or (d.credor.comissao_percentual if d.credor else 0) or 0)
+            base = float(d.valor_negociado or d.valor_atualizado)
+            comissao_div = round(base * (pct / 100), 2)
+            rows.append({
+                "repasse_id": r.id,
+                "credor_nome": r.credor.razao_social if r.credor else "",
+                "periodo": r.periodo,
+                "status_repasse": r.status,
+                "devedor_nome": d.devedor.nome if d.devedor else "",
+                "devedor_doc": d.devedor.cpf_cnpj if d.devedor else "",
+                "chave_divida": d.chave_divida,
+                "valor_original": float(d.valor_original),
+                "desconto_percentual": float(d.desconto_aplicado or 0),
+                "valor_negociado": base,
+                "comissao_percentual": pct,
+                "comissao_valor": comissao_div,
+                "valor_repasse": round(base - comissao_div, 2),
+                "data_pagamento": d.data_pagamento_confirmado.isoformat() if d.data_pagamento_confirmado else None,
+            })
+
+    totals = {
+        "qtd_dividas": len(rows),
+        "valor_original": sum(r["valor_original"] for r in rows),
+        "valor_negociado": sum(r["valor_negociado"] for r in rows),
+        "comissao_valor": sum(r["comissao_valor"] for r in rows),
+        "valor_repasse": sum(r["valor_repasse"] for r in rows),
+    }
+
+    if format != "xlsx":
+        return {"data": rows, "totals": totals}
+
+    from openpyxl import Workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Repasses Detalhado"
+    headers = ["Repasse ID", "Credor", "Período", "Status", "Devedor", "CPF/CNPJ", "Chave Dívida",
+               "Valor Original", "Desconto %", "Valor Negociado", "Comissão %", "Comissão R$", "Valor Repasse", "Data Pagamento"]
+    col_widths = [10, 28, 10, 12, 28, 16, 18, 16, 10, 16, 10, 14, 14, 14]
+    currency_cols = {8, 10, 12, 13}
+    _style_header(ws, headers, col_widths)
+    for row_num, r in enumerate(rows, start=2):
+        ws.append([
+            r["repasse_id"], r["credor_nome"], r["periodo"], r["status_repasse"],
+            r["devedor_nome"], r["devedor_doc"], r["chave_divida"],
+            r["valor_original"], r["desconto_percentual"], r["valor_negociado"],
+            r["comissao_percentual"], r["comissao_valor"], r["valor_repasse"], r["data_pagamento"] or "",
+        ])
+        _style_row(ws, row_num, currency_cols)
+    total_row = len(rows) + 2
+    _add_total_row(ws, total_row, [
+        "TOTAL", "", "", "", "", "", "",
+        totals["valor_original"], "", totals["valor_negociado"], "", totals["comissao_valor"], totals["valor_repasse"], "",
+    ], currency_cols)
+    return _xlsx_response(wb, f"repasses_detalhado_{date.today()}.xlsx")

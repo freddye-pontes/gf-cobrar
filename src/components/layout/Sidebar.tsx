@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   FileBarChart2,
+  Percent,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/regua',      label: 'Régua',      icon: GitBranch,       badge: null },
   { href: '/negociacao', label: 'Negociação', icon: Handshake,       badge: '4'  },
   { href: '/credores',    label: 'Credores',      icon: Building2,       badge: null },
+  { href: '/comissao',    label: 'Comissões',     icon: Percent,         badge: null },
   { href: '/relatorios',  label: 'Relatórios',    icon: FileBarChart2,   badge: null },
   { href: '/portal',      label: 'Portal Credor', icon: ExternalLink,    badge: null },
 ]

@@ -14,6 +14,10 @@ interface Props {
   comissaoPercentual: number
 }
 
+function fmt(v: number) {
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+}
+
 export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNome, comissaoPercentual }: Props) {
   const [dividasPagas, setDividasPagas] = useState<APIDividaListOut[]>([])
   const [selecionadas, setSelecionadas] = useState<Set<number>>(new Set())
@@ -24,58 +28,53 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
 
   useEffect(() => {
     if (!open) return
-    // Default period = current month
     const now = new Date()
     setPeriodo(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
     setLoadingDividas(true)
     dividasApi.list({ credor_id: credorId, status: 'pago' })
-      .then((data) => {
-        setDividasPagas(data)
-        setSelecionadas(new Set(data.map((d) => d.id)))
-      })
+      .then((data) => { setDividasPagas(data); setSelecionadas(new Set(data.map((d) => d.id))) })
       .catch(() => {})
       .finally(() => setLoadingDividas(false))
   }, [open, credorId])
 
   function toggleDivida(id: number) {
-    setSelecionadas((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+    setSelecionadas((prev) => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next })
   }
 
-  const valorBruto = dividasPagas
-    .filter((d) => selecionadas.has(d.id))
-    .reduce((s, d) => s + d.valor_atualizado, 0)
-
-  const comissao = valorBruto * (comissaoPercentual / 100)
-  const valorLiquido = valorBruto - comissao
-
-  function reset() {
-    setSelecionadas(new Set())
-    setPeriodo('')
-    setError('')
+  function toggleAll() {
+    setSelecionadas((prev) =>
+      prev.size === dividasPagas.length ? new Set() : new Set(dividasPagas.map((d) => d.id))
+    )
   }
+
+  const selecionadasList = dividasPagas.filter((d) => selecionadas.has(d.id))
+
+  // Use valor_negociado se disponível, senão valor_atualizado
+  const valorBase = (d: APIDividaListOut) => (d as any).valor_negociado ?? d.valor_atualizado
+  const pctDivida = (d: APIDividaListOut) => (d as any).comissao_percentual ?? comissaoPercentual
+
+  const valorBruto = selecionadasList.reduce((s, d) => s + valorBase(d), 0)
+  const descontoTotal = selecionadasList.reduce((s, d) => s + (d.valor_atualizado - valorBase(d)), 0)
+  const comissaoTotal = selecionadasList.reduce((s, d) => s + (valorBase(d) * pctDivida(d) / 100), 0)
+  const valorLiquido = valorBruto - comissaoTotal
+
+  function reset() { setSelecionadas(new Set()); setPeriodo(''); setError('') }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!periodo.trim()) { setError('Informe o período.'); return }
     if (selecionadas.size === 0) { setError('Selecione ao menos uma dívida.'); return }
-
     setLoading(true); setError('')
     try {
       await repassesApi.create({
         credor_id: credorId,
         valor_bruto: valorBruto,
-        comissao,
+        comissao: comissaoTotal,
         valor_liquido: valorLiquido,
         periodo: periodo.trim(),
         dividas_ids: Array.from(selecionadas).map(String),
       })
-      reset()
-      onSuccess()
-      onClose()
+      reset(); onSuccess(); onClose()
     } catch (e: any) {
       setError(e?.message ?? 'Erro ao gerar repasse.')
     } finally {
@@ -84,11 +83,7 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
   }
 
   return (
-    <Modal
-      title="Gerar Lote de Repasse"
-      open={open}
-      onClose={() => { reset(); onClose() }}
-      size="lg"
+    <Modal title="Gerar Lote de Repasse" open={open} onClose={() => { reset(); onClose() }} size="lg"
       footer={
         <>
           <button type="button" onClick={() => { reset(); onClose() }} disabled={loading}
@@ -100,12 +95,11 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
             {loading ? 'Gerando...' : 'Gerar Repasse'}
           </button>
         </>
-      }
-    >
+      }>
       <form id="repasse-form" onSubmit={handleSubmit} className="space-y-4">
         <div className="bg-elevated border border-border-default rounded-lg px-3 py-2 text-xs font-mono text-ink-muted">
           Credor: <span className="text-ink-primary font-bold">{credorNome}</span>
-          <span className="ml-3">· Comissão: <span className="text-amber">{comissaoPercentual}%</span></span>
+          <span className="ml-3">· Comissão base: <span className="text-amber">{comissaoPercentual}%</span></span>
         </div>
 
         <FormField label="Período" required hint="Formato: AAAA-MM (ex: 2026-03)">
@@ -113,50 +107,68 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
             placeholder="2026-03" className={inputCls} />
         </FormField>
 
-        {/* Dividas pagas */}
         <FormField label="Dívidas Pagas" hint="Selecione as dívidas a incluir neste lote">
           {loadingDividas ? (
             <p className="text-ink-muted text-xs py-2">Carregando...</p>
           ) : dividasPagas.length === 0 ? (
-            <p className="text-ink-muted text-xs py-2 bg-elevated rounded-lg px-3">
-              Nenhuma dívida paga encontrada para este credor.
-            </p>
+            <p className="text-ink-muted text-xs py-2 bg-elevated rounded-lg px-3">Nenhuma dívida paga para este credor.</p>
           ) : (
-            <div className="space-y-1.5 max-h-48 overflow-y-auto bg-elevated border border-border-default rounded-lg p-2">
-              {dividasPagas.map((d) => (
-                <label key={d.id} className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-overlay cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selecionadas.has(d.id)}
-                    onChange={() => toggleDivida(d.id)}
-                    className="w-4 h-4 accent-[#3b82f6] shrink-0"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-ink-primary text-xs font-medium truncate">{d.devedor_nome}</p>
-                  </div>
-                  <span className="font-mono text-xs text-emerald shrink-0">
-                    R$ {d.valor_atualizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </label>
-              ))}
+            <div className="border border-border-default rounded-lg overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-elevated border-b border-border-default text-[10px] font-mono uppercase tracking-wider text-ink-muted">
+                <input type="checkbox"
+                  checked={selecionadas.size === dividasPagas.length && dividasPagas.length > 0}
+                  onChange={toggleAll} className="w-3.5 h-3.5 accent-[#3b82f6] shrink-0" />
+                <span className="flex-1">Devedor</span>
+                <span className="w-24 text-right">Original</span>
+                <span className="w-20 text-right">Negociado</span>
+                <span className="w-16 text-right">Com%</span>
+              </div>
+              <div className="max-h-48 overflow-y-auto divide-y divide-border-subtle">
+                {dividasPagas.map((d) => {
+                  const vBase = valorBase(d)
+                  const pct = pctDivida(d)
+                  const temDesconto = d.valor_atualizado > vBase
+                  return (
+                    <label key={d.id} className="flex items-center gap-2 px-3 py-2 hover:bg-elevated/50 cursor-pointer">
+                      <input type="checkbox" checked={selecionadas.has(d.id)} onChange={() => toggleDivida(d.id)}
+                        className="w-3.5 h-3.5 accent-[#3b82f6] shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-ink-primary text-xs font-medium truncate">{d.devedor_nome}</p>
+                        <p className="text-ink-muted text-[10px] font-mono">{d.chave_divida}</p>
+                      </div>
+                      <span className="font-mono text-xs text-ink-secondary w-24 text-right">R$ {fmt(d.valor_atualizado)}</span>
+                      <span className={`font-mono text-xs w-20 text-right ${temDesconto ? 'text-amber' : 'text-emerald'}`}>
+                        R$ {fmt(vBase)}
+                      </span>
+                      <span className="font-mono text-xs text-ink-muted w-16 text-right">{pct}%</span>
+                    </label>
+                  )
+                })}
+              </div>
             </div>
           )}
         </FormField>
 
-        {/* Totals */}
         {selecionadas.size > 0 && (
           <div className="bg-elevated border border-border-default rounded-lg p-3 space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-ink-muted">Valor Bruto ({selecionadas.size} dívidas)</span>
-              <span className="font-mono text-ink-primary">R$ {valorBruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              <span className="font-mono text-ink-primary">R$ {fmt(valorBruto)}</span>
             </div>
+            {descontoTotal > 0 && (
+              <div className="flex justify-between text-xs">
+                <span className="text-ink-muted">Desconto total aplicado</span>
+                <span className="font-mono text-amber">- R$ {fmt(descontoTotal)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-xs">
-              <span className="text-ink-muted">Comissão ({comissaoPercentual}%)</span>
-              <span className="font-mono text-amber">- R$ {comissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              <span className="text-ink-muted">Comissão (por faixa de aging)</span>
+              <span className="font-mono text-amber">- R$ {fmt(comissaoTotal)}</span>
             </div>
             <div className="flex justify-between text-sm font-bold border-t border-border-subtle pt-1.5 mt-1.5">
-              <span className="text-ink-primary">Valor Líquido</span>
-              <span className="font-mono text-emerald">R$ {valorLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              <span className="text-ink-primary">Valor Líquido ao Credor</span>
+              <span className="font-mono text-emerald">R$ {fmt(valorLiquido)}</span>
             </div>
           </div>
         )}
