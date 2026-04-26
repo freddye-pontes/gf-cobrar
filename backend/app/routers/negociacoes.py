@@ -100,12 +100,26 @@ def atualizar_negociacao(neg_id: int, payload: NegociacaoUpdate, db: Session = D
     for field, value in updates.items():
         setattr(n, field, value)
 
-    # Sync divida status
+    # Sync divida status and financial data
     if "status" in updates:
-        divida = db.query(Divida).filter(Divida.id == n.divida_id).first()
+        divida = (
+            db.query(Divida)
+            .options(joinedload(Divida.credor))
+            .filter(Divida.id == n.divida_id)
+            .first()
+        )
         if divida:
             if updates["status"] == "concluida":
                 divida.status = "pago"
+                divida.data_pagamento_confirmado = date.today()
+                # Save negotiated value and discount
+                divida.valor_negociado = float(n.valor_oferta)
+                if n.desconto_percentual:
+                    divida.desconto_aplicado = float(n.desconto_percentual)
+                # Use negotiation commission if set, else aging-based
+                pct = float(n.comissao_percentual or divida.comissao_percentual or
+                            (divida.credor.comissao_percentual if divida.credor else 0) or 0)
+                divida.comissao_percentual = pct
             elif updates["status"] == "quebrada":
                 divida.status = "em_aberto"
 
