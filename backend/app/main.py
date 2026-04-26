@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.routers import credores, devedores, dividas, negociacoes, repasses, dashboard, importar, admin, relatorios, whatsapp
+from app.routers import credores, devedores, dividas, negociacoes, repasses, dashboard, importar, admin, relatorios, whatsapp, regua
 
 # Docs only available in development
 _is_dev = os.getenv("ENVIRONMENT", "production") == "development"
@@ -41,6 +41,7 @@ app.include_router(importar.router, prefix=prefix)
 app.include_router(admin.router, prefix=prefix)
 app.include_router(relatorios.router, prefix=prefix)
 app.include_router(whatsapp.router, prefix=prefix)
+app.include_router(regua.router, prefix=prefix)
 
 
 # ── Health check ──────────────────────────────────────────────────────────────

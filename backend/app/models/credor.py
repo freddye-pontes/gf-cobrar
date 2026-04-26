@@ -17,6 +17,7 @@ REGUA_AGING_PADRAO = [
 if TYPE_CHECKING:
     from app.models.divida import Divida
     from app.models.repasse import Repasse
+    from app.models.regua import ReguaEtapa
 
 
 class Credor(Base):
@@ -41,3 +42,4 @@ class Credor(Base):
     # Relationships
     dividas: Mapped[list["Divida"]] = relationship(back_populates="credor")
     repasses: Mapped[list["Repasse"]] = relationship(back_populates="credor")
+    regua_etapas: Mapped[list["ReguaEtapa"]] = relationship(back_populates="credor", cascade="all, delete-orphan")

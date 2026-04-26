@@ -1,29 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AppLayout } from '@/components/layout/AppLayout'
 import {
   GitBranch, MessageSquare, Mail, Phone, AlertTriangle,
-  ChevronRight, Plus, Settings2, Check, Gavel,
+  ChevronRight, Plus, Settings2, Check, Gavel, Loader2, Star,
 } from 'lucide-react'
 import type { APICredorOut } from '@/lib/api'
 import { EditarReguaModal, type RegraEtapa } from '@/components/modals/EditarReguaModal'
 
-const regrasPadrao: RegraEtapa[] = [
-  { dia: 0, acao: 'Importação', canal: 'escalamento', descricao: 'Dívida importada ao sistema e indexada na carteira', automatico: true },
-  { dia: 1, acao: 'Primeiro Contato', canal: 'whatsapp', descricao: 'Template amigável com informações da dívida e link de negociação', automatico: false },
-  { dia: 3, acao: 'Segundo Contato', canal: 'whatsapp', descricao: 'Mensagem de lembrete + e-mail com boleto ou link de pagamento', automatico: false },
-  { dia: 7, acao: 'Contato por Ligação', canal: 'telefone', descricao: 'Dívida entra na fila de ligação do operador com prioridade alta', automatico: false },
-  { dia: 15, acao: 'Tentativa Alternativa', canal: 'telefone', descricao: 'Tentar números alternativos + novo WhatsApp com tom mais formal', automatico: false },
-  { dia: 30, acao: 'Escalonamento', canal: 'escalamento', descricao: 'Notificação extrajudicial por e-mail formal e encaminhamento para análise judicial', automatico: true },
-]
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
 
-const canalConfig = {
-  whatsapp:   { label: 'WhatsApp', icon: MessageSquare, color: '#34d399', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)' },
-  email:      { label: 'E-mail',   icon: Mail,          color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.25)' },
-  telefone:   { label: 'Ligação',  icon: Phone,         color: '#fbbf24', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)' },
-  escalamento:{ label: 'Sistema',  icon: Gavel,         color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.25)' },
+const canalConfig: Record<string, { label: string; icon: React.ElementType; color: string; bg: string; border: string }> = {
+  whatsapp:    { label: 'WhatsApp', icon: MessageSquare, color: '#34d399', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.25)' },
+  email:       { label: 'E-mail',   icon: Mail,          color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.25)' },
+  telefone:    { label: 'Ligação',  icon: Phone,         color: '#fbbf24', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.25)' },
+  escalamento: { label: 'Sistema',  icon: Gavel,         color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.25)' },
 }
+
+const canalDefault = canalConfig.whatsapp
 
 interface Props {
   credores: APICredorOut[]
@@ -32,8 +27,47 @@ interface Props {
 export function ReguaClient({ credores }: Props) {
   const [selectedCredorId, setSelectedCredorId] = useState(credores[0]?.id ?? 0)
   const credor = credores.find((c) => c.id === selectedCredorId) ?? credores[0]
+
   const [editarOpen, setEditarOpen] = useState(false)
-  const [etapas, setEtapas] = useState<RegraEtapa[]>(regrasPadrao)
+  const [etapas, setEtapas] = useState<RegraEtapa[]>([])
+  const [personalizada, setPersonalizada] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  async function carregarRegua(credorId: number) {
+    setLoading(true)
+    try {
+      const res = await fetch(`${BASE}/regua/${credorId}`)
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setEtapas(data.etapas)
+      setPersonalizada(data.personalizada)
+    } catch {
+      setEtapas([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedCredorId) carregarRegua(selectedCredorId)
+  }, [selectedCredorId])
+
+  async function handleSave(novasEtapas: RegraEtapa[]) {
+    setSaving(true)
+    try {
+      const res = await fetch(`${BASE}/regua/${selectedCredorId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novasEtapas),
+      })
+      if (!res.ok) throw new Error()
+      const data = await res.json()
+      setEtapas(data.etapas)
+      setPersonalizada(true)
+    } catch {}
+    finally { setSaving(false) }
+  }
 
   return (
     <AppLayout>
@@ -41,26 +75,16 @@ export function ReguaClient({ credores }: Props) {
         <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <h1 className="font-display font-bold text-lg md:text-xl text-ink-primary tracking-tight">
-                Régua de Cobrança
-              </h1>
-              <p className="text-ink-muted text-xs font-mono mt-0.5 hidden sm:block">
-                Fluxo de contato automático por credor
-              </p>
+              <h1 className="font-display font-bold text-lg md:text-xl text-ink-primary tracking-tight">Régua de Cobrança</h1>
+              <p className="text-ink-muted text-xs font-mono mt-0.5 hidden sm:block">Fluxo de contato automático por credor</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <select
-                value={selectedCredorId}
-                onChange={(e) => setSelectedCredorId(Number(e.target.value))}
-                className="appearance-none bg-surface border border-border-subtle rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 max-w-[140px] sm:max-w-none truncate"
-              >
-                {credores.map((c) => (
-                  <option key={c.id} value={c.id}>{c.razao_social}</option>
-                ))}
+              <select value={selectedCredorId} onChange={(e) => setSelectedCredorId(Number(e.target.value))}
+                className="appearance-none bg-surface border border-border-subtle rounded-lg px-3 py-2 text-sm text-ink-primary focus:outline-none focus:border-accent/50 max-w-[140px] sm:max-w-none truncate">
+                {credores.map((c) => <option key={c.id} value={c.id}>{c.razao_social}</option>)}
               </select>
-              <button
-                onClick={() => setEditarOpen(true)}
-                className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2">
+              <button onClick={() => setEditarOpen(true)} disabled={loading}
+                className="flex items-center gap-2 bg-accent hover:bg-accent-light transition-colors text-white text-sm font-medium rounded-lg px-3 md:px-4 py-2 disabled:opacity-50">
                 <Settings2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Editar Régua</span>
               </button>
@@ -69,7 +93,6 @@ export function ReguaClient({ credores }: Props) {
         </div>
 
         <div className="p-4 md:p-6">
-          {/* Credor info */}
           {credor && (
             <div className="bg-surface border border-border-subtle rounded-xl p-4 mb-6 flex items-center gap-4 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
               <GitBranch className="w-5 h-5 text-accent-light shrink-0" />
@@ -80,7 +103,9 @@ export function ReguaClient({ credores }: Props) {
                   <span className="mx-2 text-border-emphasis">·</span>
                   Comissão: <span className="text-emerald font-mono">{credor.comissao_percentual}%</span>
                   <span className="mx-2 text-border-emphasis">·</span>
-                  <span className="text-ink-secondary">Régua padrão aplicada</span>
+                  <span className={personalizada ? 'text-accent-light' : 'text-ink-secondary'}>
+                    {personalizada ? '★ Régua personalizada' : 'Régua padrão aplicada'}
+                  </span>
                 </p>
               </div>
               <div className="flex items-center gap-1.5 bg-emerald-dim border border-emerald/20 rounded-lg px-3 py-1.5">
@@ -144,48 +169,57 @@ export function ReguaClient({ credores }: Props) {
             </div>
 
             <div className="p-5">
-              <div className="relative">
-                <div className="absolute left-[18px] top-0 bottom-0 w-px bg-border-default" />
-                <div className="space-y-1">
-                  {etapas.map((etapa, i) => {
-                    const cfg = canalConfig[etapa.canal]
-                    const Icon = cfg.icon
-                    return (
-                      <div key={i} className="relative flex items-start gap-4 py-3 pl-2 pr-3 rounded-lg hover:bg-elevated/30 transition-colors group">
-                        <div
-                          className="relative z-10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
-                        >
-                          <Icon className="w-4 h-4" style={{ color: cfg.color }} />
-                        </div>
-                        <div className="flex-1 min-w-0 pt-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-mono font-bold text-xs" style={{ color: cfg.color }}>D+{etapa.dia}</span>
-                            <span className="text-ink-primary text-sm font-medium">{etapa.acao}</span>
-                            <span className="text-[10px] font-mono rounded px-1.5 py-0.5" style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                              {cfg.label}
-                            </span>
-                            {etapa.automatico && (
-                              <span className="text-[10px] font-mono bg-elevated border border-border-default rounded px-1.5 py-0.5 text-ink-muted">AUTO</span>
-                            )}
-                          </div>
-                          <p className="text-ink-muted text-xs mt-1">{etapa.descricao}</p>
-                        </div>
-                        <button
-                          onClick={() => setEditarOpen(true)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md bg-elevated border border-border-default text-ink-muted hover:text-ink-secondary mt-1 shrink-0"
-                        >
-                          <Settings2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    )
-                  })}
+              {loading ? (
+                <div className="flex items-center justify-center py-8 gap-2 text-ink-muted">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">Carregando régua...</span>
                 </div>
-              </div>
+              ) : (
+                <div className="relative">
+                  <div className="absolute left-[18px] top-0 bottom-0 w-px bg-border-default" />
+                  <div className="space-y-1">
+                    {etapas.map((etapa, i) => {
+                      const canaisList = etapa.canais?.length ? etapa.canais : (etapa.canal ? [etapa.canal] : ['whatsapp'])
+                      const primeiroCfg = canalConfig[canaisList[0]] ?? canalDefault
+                      const Icon = primeiroCfg.icon
+                      return (
+                        <div key={i} className="relative flex items-start gap-4 py-3 pl-2 pr-3 rounded-lg hover:bg-elevated/30 transition-colors group">
+                          <div className="relative z-10 w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                            style={{ background: primeiroCfg.bg, border: `1px solid ${primeiroCfg.border}` }}>
+                            <Icon className="w-4 h-4" style={{ color: primeiroCfg.color }} />
+                          </div>
+                          <div className="flex-1 min-w-0 pt-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-mono font-bold text-xs" style={{ color: primeiroCfg.color }}>D+{etapa.dia}</span>
+                              <span className="text-ink-primary text-sm font-medium">{etapa.acao}</span>
+                              {canaisList.map((c) => {
+                                const cfg = canalConfig[c] ?? canalDefault
+                                return (
+                                  <span key={c} className="text-[10px] font-mono rounded px-1.5 py-0.5"
+                                    style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
+                                    {cfg.label}
+                                  </span>
+                                )
+                              })}
+                              {etapa.automatico && (
+                                <span className="text-[10px] font-mono bg-elevated border border-border-default rounded px-1.5 py-0.5 text-ink-muted">AUTO</span>
+                              )}
+                            </div>
+                            <p className="text-ink-muted text-xs mt-1">{etapa.descricao}</p>
+                          </div>
+                          <button onClick={() => setEditarOpen(true)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md bg-elevated border border-border-default text-ink-muted hover:text-ink-secondary mt-1 shrink-0">
+                            <Settings2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Pós-MVP notice */}
           <div className="mt-4 flex items-start gap-3 bg-violet-dim border border-violet/20 rounded-xl p-4 animate-fade-up" style={{ animationDelay: '200ms', opacity: 0 }}>
             <AlertTriangle className="w-4 h-4 text-violet shrink-0 mt-0.5" />
             <div>
@@ -203,7 +237,7 @@ export function ReguaClient({ credores }: Props) {
         onClose={() => setEditarOpen(false)}
         etapas={etapas}
         credorNome={credor?.razao_social ?? ''}
-        onSave={(novasEtapas) => setEtapas(novasEtapas)}
+        onSave={handleSave}
       />
     </AppLayout>
   )
