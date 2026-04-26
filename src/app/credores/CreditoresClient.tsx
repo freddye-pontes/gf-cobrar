@@ -10,8 +10,23 @@ import { ConfirmModal } from '@/components/modals/ConfirmModal'
 import { credoresApi, repassesApi, type APICredorOut, type APIRepasseOut } from '@/lib/api'
 import {
   Building2, Plus, ChevronDown, ChevronUp, Pencil, Trash2,
-  DollarSign, Percent, Send, CheckCircle2, Clock, AlertCircle,
+  DollarSign, Percent, Send, CheckCircle2, Clock, AlertCircle, Loader2,
 } from 'lucide-react'
+
+const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
+
+interface DividaDetalhe {
+  repasse_id: number
+  devedor_nome: string
+  chave_divida: string
+  valor_original: number
+  desconto_percentual: number
+  valor_negociado: number
+  comissao_percentual: number
+  comissao_valor: number
+  valor_repasse: number
+  data_pagamento: string | null
+}
 
 const repStatusConfig = {
   pendente: { label: 'Pendente', color: '#fbbf24', icon: <Clock className="w-3.5 h-3.5" /> },
@@ -29,6 +44,26 @@ export function CreditoresClient({ credores, repasses }: Props) {
   const refresh = () => router.refresh()
 
   const [expanded, setExpanded] = useState<number | null>(null)
+  const [dividasDetalhe, setDividasDetalhe] = useState<Record<number, DividaDetalhe[]>>({})
+  const [loadingDetalhe, setLoadingDetalhe] = useState<number | null>(null)
+
+  async function carregarDetalhe(credorId: number) {
+    if (dividasDetalhe[credorId]) return
+    setLoadingDetalhe(credorId)
+    try {
+      const res = await fetch(`${BASE}/relatorios/repasses/detalhado?credor_id=${credorId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setDividasDetalhe((prev) => ({ ...prev, [credorId]: data.data ?? [] }))
+      }
+    } finally { setLoadingDetalhe(null) }
+  }
+
+  function handleExpand(credorId: number) {
+    const next = expanded === credorId ? null : credorId
+    setExpanded(next)
+    if (next !== null) carregarDetalhe(next)
+  }
 
   // Modal state
   const [novoCredorOpen, setNovoCredorOpen] = useState(false)
@@ -112,7 +147,7 @@ export function CreditoresClient({ credores, repasses }: Props) {
                 <div key={credor.id} className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
                   <div
                     className="flex items-start gap-4 p-5 cursor-pointer hover:bg-elevated/30 transition-colors relative"
-                    onClick={() => setExpanded(isExpanded ? null : credor.id)}
+                    onClick={() => handleExpand(credor.id)}
                   >
                     <div className="w-10 h-10 rounded-xl bg-elevated border border-border-default flex items-center justify-center shrink-0">
                       <Building2 className="text-ink-secondary" size={18} />
@@ -197,8 +232,8 @@ export function CreditoresClient({ credores, repasses }: Props) {
 
                   {isExpanded && (
                     <div className="border-t border-border-subtle bg-elevated/20">
-                      <div className="p-4 md:p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
-                        <div>
+                      <div className="p-4 md:p-5 grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                        <div className="md:col-span-1">
                           <h4 className="text-ink-muted text-[10px] font-mono uppercase tracking-wider mb-3">
                             Configurações
                           </h4>
@@ -217,48 +252,94 @@ export function CreditoresClient({ credores, repasses }: Props) {
                           </div>
                         </div>
 
-                        <div>
+                        <div className="md:col-span-3">
                           <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">
-                              Repasses
-                            </h4>
-                            <button
-                              onClick={() => setRepasseModal(credor)}
-                              className="flex items-center gap-1.5 text-accent-light text-xs hover:text-accent transition-colors"
-                            >
-                              <Send className="w-3 h-3" />
-                              Gerar Lote
+                            <h4 className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">Repasses</h4>
+                            <button onClick={() => setRepasseModal(credor)}
+                              className="flex items-center gap-1.5 text-accent-light text-xs hover:text-accent transition-colors">
+                              <Send className="w-3 h-3" /> Gerar Lote
                             </button>
                           </div>
-                          {credorRepasses.length === 0 ? (
+
+                          {loadingDetalhe === credor.id ? (
+                            <div className="flex items-center gap-2 py-4 text-ink-muted text-xs">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Carregando dívidas...
+                            </div>
+                          ) : credorRepasses.length === 0 ? (
                             <p className="text-ink-muted text-xs">Nenhum repasse registrado.</p>
                           ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               {credorRepasses.map((rep) => {
                                 const cfg = repStatusConfig[rep.status as keyof typeof repStatusConfig] ?? repStatusConfig.pendente
+                                const dividasRep = (dividasDetalhe[credor.id] ?? []).filter((d) => d.repasse_id === rep.id)
                                 return (
-                                  <div key={rep.id} className="bg-surface rounded-lg p-3 border border-border-subtle">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-ink-secondary text-xs">{rep.periodo}</span>
-                                      <div className="flex items-center gap-1 text-[10px] font-mono font-bold" style={{ color: cfg.color }}>
-                                        {cfg.icon}
-                                        {cfg.label.toUpperCase()}
+                                  <div key={rep.id} className="bg-surface rounded-xl border border-border-subtle overflow-hidden">
+                                    {/* Repasse header */}
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-ink-primary text-sm font-semibold font-mono">{rep.periodo}</span>
+                                        <div className="flex items-center gap-1 text-[10px] font-mono font-bold" style={{ color: cfg.color }}>
+                                          {cfg.icon} {cfg.label.toUpperCase()}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-4 text-right">
+                                        <div>
+                                          <p className="text-[10px] text-ink-muted">Bruto</p>
+                                          <p className="font-mono text-xs text-ink-secondary">{formatCurrency(rep.valor_bruto)}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] text-ink-muted">Comissão ({credor.comissao_percentual}%)</p>
+                                          <p className="font-mono text-xs text-amber">-{formatCurrency(rep.comissao)}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] text-ink-muted">Líquido</p>
+                                          <p className="font-mono text-sm font-bold text-emerald">{formatCurrency(rep.valor_liquido)}</p>
+                                        </div>
                                       </div>
                                     </div>
-                                    <div className="flex items-center justify-between mt-1.5">
-                                      <div>
-                                        <p className="text-ink-muted text-[10px]">Bruto: <span className="text-ink-secondary font-mono">{formatCurrency(rep.valor_bruto)}</span></p>
-                                        <p className="text-ink-muted text-[10px]">Comissão: <span className="text-amber font-mono">-{formatCurrency(rep.comissao)}</span></p>
+
+                                    {/* Individual debts */}
+                                    {dividasRep.length > 0 && (
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full text-xs">
+                                          <thead>
+                                            <tr className="bg-elevated/50 text-ink-muted font-mono uppercase tracking-wider">
+                                              <th className="px-3 py-2 text-left">Devedor</th>
+                                              <th className="px-3 py-2 text-left">Chave</th>
+                                              <th className="px-3 py-2 text-right">Original</th>
+                                              <th className="px-3 py-2 text-right">Negociado</th>
+                                              <th className="px-3 py-2 text-right">Com%</th>
+                                              <th className="px-3 py-2 text-right">Comissão R$</th>
+                                              <th className="px-3 py-2 text-right">Repasse</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-border-subtle">
+                                            {dividasRep.map((d, i) => (
+                                              <tr key={i} className="hover:bg-elevated/30">
+                                                <td className="px-3 py-2 text-ink-primary font-medium truncate max-w-[140px]">{d.devedor_nome}</td>
+                                                <td className="px-3 py-2 font-mono text-ink-muted text-[10px]">{d.chave_divida}</td>
+                                                <td className="px-3 py-2 font-mono text-ink-secondary text-right">{formatCurrency(d.valor_original)}</td>
+                                                <td className="px-3 py-2 font-mono text-ink-primary text-right">
+                                                  {formatCurrency(d.valor_negociado)}
+                                                  {d.desconto_percentual > 0 && <span className="ml-1 text-amber">(-{d.desconto_percentual}%)</span>}
+                                                </td>
+                                                <td className="px-3 py-2 font-mono text-ink-muted text-right">{d.comissao_percentual}%</td>
+                                                <td className="px-3 py-2 font-mono text-amber text-right">{formatCurrency(d.comissao_valor)}</td>
+                                                <td className="px-3 py-2 font-mono font-bold text-emerald text-right">{formatCurrency(d.valor_repasse)}</td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
                                       </div>
-                                      <p className="font-mono font-bold text-emerald text-sm">{formatCurrency(rep.valor_liquido)}</p>
-                                    </div>
+                                    )}
+
                                     {rep.status === 'pendente' && (
-                                      <button
-                                        onClick={() => setAprovarRepasse(rep)}
-                                        className="w-full mt-2 bg-emerald-dim border border-emerald/20 text-emerald text-xs font-medium rounded py-1.5 hover:bg-emerald/20 transition-colors"
-                                      >
-                                        Aprovar e Executar Repasse
-                                      </button>
+                                      <div className="px-4 py-3 border-t border-border-subtle">
+                                        <button onClick={() => setAprovarRepasse(rep)}
+                                          className="w-full bg-emerald-dim border border-emerald/20 text-emerald text-xs font-medium rounded-lg py-2 hover:bg-emerald/20 transition-colors">
+                                          Aprovar e Executar Repasse
+                                        </button>
+                                      </div>
                                     )}
                                   </div>
                                 )
