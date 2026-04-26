@@ -218,19 +218,34 @@ def atualizar_status(divida_id: int, payload: StatusUpdate, db: Session = Depend
             detail=f"Transição inválida: {d.status} → {payload.status}",
         )
 
+    if payload.status == "ptp_ativa" and not payload.data_promessa_pagamento:
+        raise HTTPException(status_code=422, detail="Data da promessa de pagamento é obrigatória para PTP Ativa.")
+
     d.status = payload.status
     d.acoes_recomendadas = STATUS_ACOES.get(payload.status, d.acoes_recomendadas)
 
-    if payload.nota or payload.operador_nome:
-        h = HistoricoContato(
-            divida_id=d.id,
-            data=date.today(),
-            canal="sistema",
-            resultado=payload.nota or f"Status alterado para {payload.status}",
-            operador_nome=payload.operador_nome,
-        )
-        db.add(h)
+    if payload.data_promessa_pagamento:
+        d.data_promessa_pagamento = payload.data_promessa_pagamento
+    if payload.status == "pago":
+        d.data_pagamento_confirmado = payload.data_pagamento_confirmado or date.today()
+        # Auto-calculate commission on payment
+        pct = float(d.comissao_percentual or (d.credor.comissao_percentual if d.credor else 0) or 0)
+        d.comissao_percentual = pct
 
+    resultado_hist = payload.nota or f"Status alterado para {payload.status}"
+    if payload.status == "ptp_ativa" and payload.data_promessa_pagamento:
+        resultado_hist += f" — Promessa para {payload.data_promessa_pagamento.strftime('%d/%m/%Y')}"
+    if payload.status == "pago" and d.data_pagamento_confirmado:
+        resultado_hist += f" — Pago em {d.data_pagamento_confirmado.strftime('%d/%m/%Y')}"
+
+    h = HistoricoContato(
+        divida_id=d.id,
+        data=date.today(),
+        canal="sistema",
+        resultado=resultado_hist,
+        operador_nome=payload.operador_nome,
+    )
+    db.add(h)
     db.commit()
     db.refresh(d)
     return _build_full_out(d)

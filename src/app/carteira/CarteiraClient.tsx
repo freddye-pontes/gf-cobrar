@@ -8,10 +8,11 @@ import { ConfirmModal } from '@/components/modals/ConfirmModal'
 import { formatCurrency } from '@/lib/utils'
 import { NovaDividaModal } from '@/components/modals/NovaDividaModal'
 import { ImportarPlanilhaModal } from '@/components/modals/ImportarPlanilhaModal'
+import { NovaNegociacaoModal } from '@/components/modals/NovaNegociacaoModal'
 import { dividasApi, type APIDividaListOut, type APICredorOut } from '@/lib/api'
 import {
   Search, Filter, Upload, ChevronRight,
-  Building2, User, ArrowUpDown, Plus, X, Calendar, AlertTriangle, Trash2,
+  Building2, User, ArrowUpDown, Plus, X, Calendar, AlertTriangle, Trash2, Handshake,
 } from 'lucide-react'
 import type { StatusDivida } from '@/lib/types'
 
@@ -44,6 +45,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
   const [novaDividaOpen, setNovaDividaOpen] = useState(false)
   const [importarOpen, setImportarOpen] = useState(false)
   const [deleteDivida, setDeleteDivida] = useState<APIDividaListOut | null>(null)
+  const [negociarDivida, setNegociarDivida] = useState<APIDividaListOut | null>(null)
 
   const hasActiveFilters = !!(search || statusFilter || credorFilter || agingFilter || dataInicio || dataFim || filtroCadastro)
 
@@ -261,6 +263,11 @@ export function CarteiraClient({ dividas, credores }: Props) {
                     {row.faixa_aging !== 'em_dia' && (
                       <span className="text-[10px] text-ink-muted font-mono">{row.dias_atraso}d · {row.comissao_sugerida}%</span>
                     )}
+                    {row.comissao_sugerida > 0 && (
+                      <span className="text-[10px] font-mono text-amber">
+                        Comissão: {((row.valor_atualizado * row.comissao_sugerida) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    )}
                   </span>
                   {/* Col 5 — Valor */}
                   <span className="hidden md:block font-mono text-sm font-medium text-ink-primary">{formatCurrency(row.valor_atualizado)}</span>
@@ -268,6 +275,15 @@ export function CarteiraClient({ dividas, credores }: Props) {
                   <span className="hidden md:block"><StatusBadge status={row.status as StatusDivida} size="sm" /></span>
                   {/* Col 7 — Actions */}
                   <div className="hidden md:flex items-center gap-1 justify-end">
+                    {['em_aberto', 'em_negociacao'].includes(row.status) && (
+                      <button
+                        onClick={() => setNegociarDivida(row)}
+                        className="p-1.5 rounded-lg text-ink-muted hover:text-accent-light hover:bg-accent-dim transition-colors"
+                        title="Negociar"
+                      >
+                        <Handshake className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => setDeleteDivida(row)}
                       className="p-1.5 rounded-lg text-ink-muted hover:text-danger hover:bg-danger-dim transition-colors"
@@ -292,6 +308,12 @@ export function CarteiraClient({ dividas, credores }: Props) {
         open={novaDividaOpen}
         onClose={() => setNovaDividaOpen(false)}
         onSuccess={() => router.refresh()}
+      />
+      <NovaNegociacaoModal
+        open={!!negociarDivida}
+        onClose={() => setNegociarDivida(null)}
+        onSuccess={() => { setNegociarDivida(null); router.refresh() }}
+        preselectedDividaId={negociarDivida?.id}
       />
       <ImportarPlanilhaModal
         open={importarOpen}

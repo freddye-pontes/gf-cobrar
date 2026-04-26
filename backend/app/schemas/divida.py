@@ -51,6 +51,8 @@ class StatusUpdate(BaseModel):
     status: str
     nota: Optional[str] = None
     operador_nome: Optional[str] = None
+    data_promessa_pagamento: Optional[date] = None
+    data_pagamento_confirmado: Optional[date] = None
 
 
 class DividaListOut(BaseModel):
@@ -80,6 +82,10 @@ class DividaListOut(BaseModel):
 
     # Aging (calculated in router, comissao_percentual persisted on model)
     comissao_percentual: Optional[float] = None
+    data_promessa_pagamento: Optional[date] = None
+    data_pagamento_confirmado: Optional[date] = None
+    valor_negociado: Optional[float] = None
+    desconto_aplicado: Optional[float] = None
     dias_atraso: int = 0
     faixa_aging: str = "em_dia"        # em_dia | baixa | media | alta | critica
     comissao_sugerida: float = 0.0     # same as comissao_percentual, kept for compat

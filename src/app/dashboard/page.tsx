@@ -1,6 +1,7 @@
 import { AppLayout } from '@/components/layout/AppLayout'
 import { KPICard } from '@/components/ui/KPICard'
-import { dashboardApi, dividasApi, type APIDividaListOut, type APIStatusCarteira, type APIAgingBucket } from '@/lib/api'
+import { dashboardApi, dividasApi, type APIDividaListOut, type APIStatusCarteira, type APIAgingBucket, type APIPtpAlerta } from '@/lib/api'
+import { PtpAlertBanner } from './PtpAlertBanner'
 import { formatCurrencyCompact } from '@/lib/utils'
 import {
   DollarSign, TrendingUp, Clock, AlertTriangle, CheckSquare, Zap,
@@ -14,12 +15,13 @@ export default async function DashboardPage() {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   })
 
-  const [kpis, chartData, statusCarteira, workQueue, agingData] = await Promise.all([
+  const [kpis, chartData, statusCarteira, workQueue, agingData, ptpAlertas] = await Promise.all([
     dashboardApi.kpis().catch(() => null),
     dashboardApi.chart().catch(() => []),
     dashboardApi.statusCarteira().catch(() => [] as APIStatusCarteira[]),
     dividasApi.workQueue().catch(() => [] as APIDividaListOut[]),
     dashboardApi.aging().catch(() => [] as APIAgingBucket[]),
+    dashboardApi.alertasPtp().catch(() => [] as APIPtpAlerta[]),
   ])
 
   const isOffline = kpis === null
@@ -53,6 +55,9 @@ export default async function DashboardPage() {
         </div>
 
         <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+          {/* PTP Alert Banner */}
+          {ptpAlertas.length > 0 && <PtpAlertBanner alertas={ptpAlertas} />}
+
           {/* KPI Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             <KPICard

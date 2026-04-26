@@ -49,7 +49,27 @@
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['scripts']\\)\")",
       "Bash(PYTHONUTF8=1 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000)",
       "Bash(npm run:*)",
-      "Bash(npm audit:*)"
+      "Bash(npm audit:*)",
+      "Bash(pip install:*)",
+      "Bash(PYTHONUTF8=1 DATABASE_URL=\"postgresql://postgres:RKPttyKSHuHEoUHLkzuuggwfouAysuFj@postgres.railway.internal:5432/railway\" python -c \"import psycopg2; print\\('ok'\\)\")",
+      "Bash(PYTHONUTF8=1 DATABASE_URL=\"postgresql://postgres:RKPttyKSHuHEoUHLkzuuggwfouAysuFj@junction.proxy.rlwy.net:22757/railway\" alembic upgrade head)",
+      "Bash(PYTHONUTF8=1 DATABASE_URL=\"postgresql://postgres:RKPttyKSHuHEoUHLkzuuggwfouAysuFj@junction.proxy.rlwy.net:22757/railway\" python seed.py)",
+      "Bash(pg_dump -U postgres -d gf_cobrar --no-owner --no-acl -f \"c:\\\\Users\\\\fredd\\\\OneDrive\\\\Documentos\\\\Claude Project\\\\gf_cobrar\\\\backup_local.sql\")",
+      "Bash(curl -s https://gf-cobrar-production.up.railway.app/health)",
+      "Bash(curl -s -X POST https://gf-cobrar-production.up.railway.app/api/v1/credores/ -H \"Content-Type: application/json\" -H \"Origin: https://gf-cobrar-euo3.vercel.app\" -d '{\"razao_social\":\"teste\",\"cnpj\":\"12.345.678/0001-95\",\"comissao_percentual\":15,\"limite_desconto\":30}')",
+      "Bash(curl -s -X POST https://gf-cobrar-production.up.railway.app/api/v1/credores/ -H \"Content-Type: application/json\" -d '{\"razao_social\":\"Gustavo\",\"cnpj\":\"12.345.678/0001-95\",\"comissao_percentual\":15,\"limite_desconto\":30}')",
+      "Bash(curl -s -X OPTIONS https://gf-cobrar-production.up.railway.app/api/v1/credores/ -H \"Origin: https://gf-cobrar-euo3.vercel.app\" -H \"Access-Control-Request-Method: POST\" -v)",
+      "Bash(curl -v https://gf-cobrar-production.up.railway.app/api/v1/credores/)",
+      "Bash(curl -v -X POST https://gf-cobrar-production.up.railway.app/api/v1/credores/)",
+      "Bash(curl -v -X POST https://gf-cobrar-production.up.railway.app/api/v1/credores)",
+      "Bash(curl -s -X POST https://gf-cobrar-production.up.railway.app/api/v1/dividas/ -H \"Content-Type: application/json\" -d '{\"devedor_id\":1,\"credor_id\":1,\"valor_original\":1000,\"valor_atualizado\":1000,\"data_vencimento\":\"2025-01-01\",\"tipo\":\"cartao\"}')",
+      "Bash(curl -s -X POST https://gf-cobrar-production.up.railway.app/api/v1/negociacoes/ -H \"Content-Type: application/json\" -d '{\"divida_id\":1,\"tipo\":\"desconto\",\"valor_oferta\":800,\"responsavel_nome\":\"Teste\"}')",
+      "Bash(curl -s -X POST https://gf-cobrar-production.up.railway.app/api/v1/dividas/1/historico/ -H \"Content-Type: application/json\" -d '{\"canal\":\"whatsapp\",\"resultado\":\"contato_realizado\",\"operador_nome\":\"Teste\"}')",
+      "Bash(python -m alembic upgrade head)",
+      "Bash(sed -i 's/GF Cobrar — Sistema de Gestão de Cobrança/GF Recebíveis — Sistema de Gestão de Cobrança/g' src/app/layout.tsx)",
+      "Bash(sed -i 's/GF Cobrar — Portal Externo/GF Recebíveis — Portal Externo/g' src/app/portal/page.tsx)",
+      "Bash(sed -i 's/GF Cobrar/GF Recebíveis/g' src/components/layout/Sidebar.tsx)",
+      "Bash(sed -i 's/APP_NAME: str = \"GF Cobrar API\"/APP_NAME: str = \"GF Recebíveis API\"/g' backend/app/core/config.py)"
     ]
   }
 }

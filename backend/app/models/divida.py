@@ -37,6 +37,10 @@ class Divida(Base):
     dias_sem_contato: Mapped[int] = mapped_column(Integer, default=0)
     ultimo_contato: Mapped[Optional[date]] = mapped_column(Date)
     comissao_percentual: Mapped[Optional[float]] = mapped_column(Numeric(5, 2), nullable=True)
+    data_promessa_pagamento: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    data_pagamento_confirmado: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    valor_negociado: Mapped[Optional[float]] = mapped_column(Numeric(15, 2), nullable=True)
+    desconto_aplicado: Mapped[Optional[float]] = mapped_column(Numeric(5, 2), nullable=True)
     acoes_recomendadas: Mapped[str] = mapped_column(Text, default="")
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())

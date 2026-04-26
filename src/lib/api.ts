@@ -94,6 +94,16 @@ export interface APIStatusCarteira {
   total: number
 }
 
+export interface APIPtpAlerta {
+  id: number
+  chave_divida: string
+  devedor_nome: string
+  credor_nome: string
+  valor_atualizado: number
+  data_promessa_pagamento: string
+  vencida: boolean
+}
+
 export interface APIDividaListOut {
   id: number
   chave_divida: string
@@ -212,6 +222,7 @@ export const dashboardApi = {
   chart: () => get<APIChartPoint[]>('/dashboard/chart'),
   statusCarteira: () => get<APIStatusCarteira[]>('/dashboard/status-carteira'),
   aging: () => get<APIAgingBucket[]>('/dashboard/aging'),
+  alertasPtp: () => get<APIPtpAlerta[]>('/dashboard/alertas/ptp'),
 }
 
 // ── Dividas ───────────────────────────────────────────────────────────────────
@@ -228,7 +239,7 @@ export const dividasApi = {
   workQueue: () => get<APIDividaListOut[]>('/dividas/work-queue'),
   get: (id: number) => get<APIDividaOut>(`/dividas/${id}`),
   create: (body: unknown) => post<APIDividaOut>('/dividas/', body),
-  updateStatus: (id: number, body: { status: string; nota?: string; operador_nome?: string }) =>
+  updateStatus: (id: number, body: { status: string; nota?: string; operador_nome?: string; data_promessa_pagamento?: string; data_pagamento_confirmado?: string }) =>
     put<APIDividaOut>(`/dividas/${id}/status/`, body),
   addHistorico: (id: number, body: { canal: string; resultado: string; operador_nome?: string }) =>
     post<APIHistoricoContato>(`/dividas/${id}/historico/`, body),

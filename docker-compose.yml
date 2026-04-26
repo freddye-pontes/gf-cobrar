@@ -1,0 +1,77 @@
+services:
+  evolution-db:
+    image: postgres:16-alpine
+    container_name: gf_evolution_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evolution
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: evolution123
+    volumes:
+      - evolution_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  evolution-api:
+    image: atendai/evolution-api:v1.8.7
+    container_name: gf_evolution
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      evolution-db:
+        condition: service_healthy
+    environment:
+      # Autenticação da API
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: gf-cobrar-evolution-key-2026
+      AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES: "true"
+
+      # Servidor
+      SERVER_PORT: 8080
+      SERVER_URL: http://localhost:8080
+
+      # Banco de dados (PostgreSQL dedicado)
+      DATABASE_ENABLED: "false"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:evolution123@evolution-db:5432/evolution
+      DATABASE_CONNECTION_CLIENT_NAME: evolution_api
+
+      DATABASE_SAVE_DATA_INSTANCE: "false"
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "false"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+
+      # Store em arquivo (v1)
+      STORE_MESSAGES: "true"
+      STORE_MESSAGE_UP: "true"
+      STORE_CONTACTS: "true"
+      STORE_CHATS: "true"
+
+      # Cache local (sem Redis)
+      CACHE_REDIS_ENABLED: "false"
+
+      # Sessões WhatsApp
+      CONFIG_SESSION_PHONE_CLIENT: GF Cobrar
+      CONFIG_SESSION_PHONE_NAME: Chrome
+
+      # Logs
+      LOG_LEVEL: DEBUG
+      LOG_COLOR: "true"
+
+      # QR Code
+      QRCODE_LIMIT: 30
+
+      # Webhook global (desabilitado por ora)
+      WEBHOOK_GLOBAL_ENABLED: "false"
+
+    volumes:
+      - evolution_instances:/evolution/instances
+
+volumes:
+  evolution_db_data:
+  evolution_instances:

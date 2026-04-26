@@ -37,15 +37,18 @@ export function MudarStatusModal({ open, onClose, onSuccess, dividaId, statusAtu
   const [novoStatus, setNovoStatus] = useState(opcoes[0] ?? '')
   const [nota, setNota] = useState('')
   const [operador, setOperador] = useState('')
+  const [dataPromessa, setDataPromessa] = useState('')
+  const [dataPagamento, setDataPagamento] = useState(new Date().toISOString().slice(0, 10))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Sync novoStatus when statusAtual or open changes (prevents stale value)
   useEffect(() => {
     const opts = STATUS_TRANSITIONS[statusAtual] ?? []
     setNovoStatus(opts[0] ?? '')
     setNota('')
     setOperador('')
+    setDataPromessa('')
+    setDataPagamento(new Date().toISOString().slice(0, 10))
     setError('')
   }, [statusAtual, open])
 
@@ -54,12 +57,18 @@ export function MudarStatusModal({ open, onClose, onSuccess, dividaId, statusAtu
     setNovoStatus(opts[0] ?? '')
     setNota('')
     setOperador('')
+    setDataPromessa('')
+    setDataPagamento(new Date().toISOString().slice(0, 10))
     setError('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!novoStatus) return
+    if (novoStatus === 'ptp_ativa' && !dataPromessa) {
+      setError('Informe a data da promessa de pagamento.')
+      return
+    }
     setLoading(true)
     setError('')
     try {
@@ -67,6 +76,8 @@ export function MudarStatusModal({ open, onClose, onSuccess, dividaId, statusAtu
         status: novoStatus,
         nota: nota.trim() || undefined,
         operador_nome: operador.trim() || undefined,
+        data_promessa_pagamento: novoStatus === 'ptp_ativa' ? dataPromessa : undefined,
+        data_pagamento_confirmado: novoStatus === 'pago' ? dataPagamento : undefined,
       })
       reset()
       onSuccess()
@@ -116,7 +127,7 @@ export function MudarStatusModal({ open, onClose, onSuccess, dividaId, statusAtu
         <FormField label="Novo Status" required>
           <select
             value={novoStatus}
-            onChange={(e) => setNovoStatus(e.target.value)}
+            onChange={(e) => { setNovoStatus(e.target.value); setError('') }}
             className={selectCls}
           >
             {opcoes.map((s) => (
@@ -124,6 +135,30 @@ export function MudarStatusModal({ open, onClose, onSuccess, dividaId, statusAtu
             ))}
           </select>
         </FormField>
+
+        {novoStatus === 'ptp_ativa' && (
+          <FormField label="Data da Promessa de Pagamento" required>
+            <input
+              type="date"
+              value={dataPromessa}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setDataPromessa(e.target.value)}
+              className={inputCls}
+            />
+          </FormField>
+        )}
+
+        {novoStatus === 'pago' && (
+          <FormField label="Data do Pagamento">
+            <input
+              type="date"
+              value={dataPagamento}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => setDataPagamento(e.target.value)}
+              className={inputCls}
+            />
+          </FormField>
+        )}
 
         <FormField label="Nota (opcional)">
           <textarea

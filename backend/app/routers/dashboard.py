@@ -6,8 +6,10 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.database import get_db
-from app.models import Divida
+from app.models import Divida, Credor
+from app.models.devedor import Devedor
 from app.models.negociacao import Negociacao
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -239,3 +241,32 @@ def get_aging(db: Session = Depends(get_db)):
         ))
 
     return result
+
+
+@router.get("/alertas/ptp")
+def alertas_ptp(db: Session = Depends(get_db)):
+    """Returns PTPs with past or today's promise date and no confirmed payment."""
+    hoje = date.today()
+    dividas = (
+        db.query(Divida)
+        .options(joinedload(Divida.devedor), joinedload(Divida.credor))
+        .filter(
+            Divida.status == "ptp_ativa",
+            Divida.data_promessa_pagamento <= hoje,
+            Divida.data_pagamento_confirmado == None,
+        )
+        .order_by(Divida.data_promessa_pagamento)
+        .all()
+    )
+    return [
+        {
+            "id": d.id,
+            "chave_divida": d.chave_divida,
+            "devedor_nome": d.devedor.nome if d.devedor else "",
+            "credor_nome": d.credor.razao_social if d.credor else "",
+            "valor_atualizado": float(d.valor_atualizado),
+            "data_promessa_pagamento": d.data_promessa_pagamento.isoformat() if d.data_promessa_pagamento else None,
+            "vencida": d.data_promessa_pagamento < hoje if d.data_promessa_pagamento else False,
+        }
+        for d in dividas
+    ]
