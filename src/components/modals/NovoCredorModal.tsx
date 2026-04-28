@@ -31,8 +31,6 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
   const [contatoNome, setContatoNome] = useState('')
   const [contatoEmail, setContatoEmail] = useState('')
   const [observacao, setObservacao] = useState('')
-  const [comissaoPercentual, setComissaoPercentual] = useState('10')
-  const [limiteDesconto, setLimiteDesconto] = useState('20')
   const [ativo, setAtivo] = useState(true)
   const [agingOpen, setAgingOpen] = useState(false)
   const [reguaAging, setReguaAging] = useState<FaixaAging[]>(AGING_PADRAO)
@@ -47,8 +45,6 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
       setContatoNome(credor.contato_nome ?? '')
       setContatoEmail(credor.contato_email ?? '')
       setObservacao((credor as any).observacao ?? '')
-      setComissaoPercentual(String(credor.comissao_percentual ?? 10))
-      setLimiteDesconto(String(credor.limite_desconto ?? 20))
       setAtivo(credor.ativo)
       const ra = (credor as any).regua_aging
       setReguaAging(ra?.length ? ra : AGING_PADRAO)
@@ -65,7 +61,6 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
     setRazaoSocial(''); setCnpj(''); setPixKey('')
     setContatoNome(''); setContatoEmail('')
     setObservacao(''); setAtivo(true); setError('')
-    setComissaoPercentual('10'); setLimiteDesconto('20')
     setReguaAging(AGING_PADRAO); setAgingOpen(false)
   }
 
@@ -81,6 +76,9 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
     setReguaAging((prev) => prev.filter((_, i) => i !== idx))
   }
 
+  // Derive comissao_percentual from the first aging tier as default for backend
+  const comissaoPadrao = reguaAging[0]?.comissao ?? 0
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!razaoSocial.trim()) { setError('Informe a razão social.'); return }
@@ -94,8 +92,8 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
       contato_nome: contatoNome.trim(),
       contato_email: contatoEmail.trim(),
       observacao: observacao.trim() || null,
-      comissao_percentual: parseFloat(comissaoPercentual) || 0,
-      limite_desconto: parseFloat(limiteDesconto) || 0,
+      comissao_percentual: comissaoPadrao,
+      limite_desconto: 0,
       ativo,
       regua_aging: reguaAging,
     }
@@ -146,17 +144,6 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField label="Comissão Base (%)" hint="Percentual padrão sobre valor recuperado">
-            <input type="number" min="0" max="100" step="0.1" value={comissaoPercentual}
-              onChange={(e) => setComissaoPercentual(e.target.value)} className={inputCls} />
-          </FormField>
-          <FormField label="Desconto Máximo (%)" hint="Limite de desconto que operadores podem oferecer">
-            <input type="number" min="0" max="100" step="0.1" value={limiteDesconto}
-              onChange={(e) => setLimiteDesconto(e.target.value)} className={inputCls} />
-          </FormField>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <FormField label="Nome do Contato">
             <input type="text" value={contatoNome} onChange={(e) => setContatoNome(e.target.value)}
               placeholder="Nome do responsável" className={inputCls} />
@@ -181,7 +168,9 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
           </button>
           {agingOpen && (
             <div className="p-4 space-y-2">
-              <p className="text-xs text-ink-muted mb-3">Configure a comissão por faixa de dias em atraso. A última faixa sem limite superior cobre todos os dias acima.</p>
+              <p className="text-xs text-ink-muted mb-3">
+                A comissão de cada dívida é calculada automaticamente pela faixa de aging (dias em atraso).
+              </p>
               <div className="grid grid-cols-4 gap-2 text-[10px] font-mono uppercase tracking-wider text-ink-muted px-1 mb-1">
                 <span>Faixa</span><span>Até (dias)</span><span>Comissão %</span><span />
               </div>
