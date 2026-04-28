@@ -40,9 +40,9 @@ const statusColors: Record<string, string> = {
 }
 
 export function RelatoriosClient({ credores }: Props) {
-  const [tab, setTab] = useState<Tab>('repasses')
+  const tab: Tab = 'repasses'
   const [loading, setLoading] = useState(false)
-  const [data, setData] = useState<RepasseRow[] | ComissaoRow[] | RecuperadoRow[]>([])
+  const [data, setData] = useState<RepasseRow[]>([])
   const [totals, setTotals] = useState<Record<string, number>>({})
   const [hasSearched, setHasSearched] = useState(false)
 
