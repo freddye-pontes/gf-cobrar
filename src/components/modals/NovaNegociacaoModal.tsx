@@ -47,19 +47,36 @@ export function NovaNegociacaoModal({ open, onClose, onSuccess, preselectedDivid
 
   useEffect(() => {
     if (!open) return
-    setLoadingDividas(true)
-    Promise.all([dividasApi.list(), negociacoesApi.list('ativa')])
-      .then(([allDividas, ativas]) => {
-        const ativaIds = new Set(ativas.map((n) => n.divida_id))
-        const available = allDividas.filter(
-          (d) => !ativaIds.has(d.id) && !['pago', 'encerrado'].includes(d.status)
-        )
-        setDividas(available)
-        if (!preselectedDividaId && available.length > 0) {
-          setDividaId(available[0].id)
-          setValorOriginal(available[0].valor_atualizado)
-        }
-      }).catch(() => {}).finally(() => setLoadingDividas(false))
+
+    if (preselectedDividaId) {
+      // When a specific divida is pre-selected, fetch it directly
+      setLoadingDividas(true)
+      dividasApi.get(preselectedDividaId)
+        .then((d) => {
+          setDividaId(d.id)
+          setValorOriginal(d.valor_atualizado)
+          setComissaoSugerida((d as any).comissao_sugerida ?? null)
+          setFaixaAging((d as any).faixa_aging ?? '')
+          setComissao(String((d as any).comissao_sugerida ?? ''))
+        })
+        .catch(() => {})
+        .finally(() => setLoadingDividas(false))
+    } else {
+      // Generic: load available dividas for the dropdown
+      setLoadingDividas(true)
+      Promise.all([dividasApi.list(), negociacoesApi.list('ativa')])
+        .then(([allDividas, ativas]) => {
+          const ativaIds = new Set(ativas.map((n) => n.divida_id))
+          const available = allDividas.filter(
+            (d) => !ativaIds.has(d.id) && !['pago', 'encerrado'].includes(d.status)
+          )
+          setDividas(available)
+          if (available.length > 0) {
+            setDividaId(available[0].id)
+            setValorOriginal(available[0].valor_atualizado)
+          }
+        }).catch(() => {}).finally(() => setLoadingDividas(false))
+    }
   }, [open, preselectedDividaId])
 
   useEffect(() => {

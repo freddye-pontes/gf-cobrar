@@ -178,49 +178,55 @@ export function DividaActionButtons({ divida }: { divida: DividaInfo }) {
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border-subtle">
-        <div className="flex items-center gap-1">
-          <select
-            value={template}
-            onChange={(e) => setTemplate(e.target.value)}
-            className="text-xs bg-elevated border border-border-default rounded-lg px-2 py-1.5 text-ink-secondary focus:outline-none focus:border-accent"
-          >
-            <option value="primeiro_contato">1º Contato</option>
-            <option value="segundo_contato">2º Contato</option>
-            <option value="escalamento">Escalamento</option>
-          </select>
-          <button
-            onClick={enviarWpp}
-            disabled={wppLoading}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-emerald-dim border border-emerald/20 rounded-lg text-emerald hover:bg-emerald/20 transition-colors disabled:opacity-50"
-          >
-            {wppLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : wppSent ? <Check className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
-            {wppSent ? 'Enviado!' : 'WhatsApp'}
-          </button>
-        </div>
-        <button
-          onClick={() => setContatoOpen(true)}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-elevated border border-border-default rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-overlay transition-colors"
-        >
-          <FileText className="w-3.5 h-3.5" />
-          Registrar Contato
-        </button>
-        <button
-          onClick={() => setStatusOpen(true)}
-          className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-elevated border border-border-default rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-overlay transition-colors"
-        >
-          <ArrowRightLeft className="w-3.5 h-3.5" />
-          Mudar Status
-        </button>
+      <div className="mt-4 pt-4 border-t border-border-subtle space-y-2">
+
+        {/* PRIMARY: Negociar — destaque total */}
         {podeNegociar && (
           <button
             onClick={() => setNegOpen(true)}
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-accent-dim border border-accent/20 rounded-lg text-accent-light hover:bg-accent/20 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-semibold rounded-xl transition-colors"
           >
-            <Handshake className="w-3.5 h-3.5" />
-            Nova Negociação
+            <Handshake className="w-4 h-4" />
+            Negociar
           </button>
         )}
+
+        {/* SECONDARY: WhatsApp + ações secundárias */}
+        <div className="flex flex-wrap gap-2">
+          <div className="flex items-center gap-1">
+            <select
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+              className="text-xs bg-elevated border border-border-default rounded-lg px-2 py-1.5 text-ink-secondary focus:outline-none focus:border-accent"
+            >
+              <option value="primeiro_contato">1º Contato</option>
+              <option value="segundo_contato">2º Contato</option>
+              <option value="escalamento">Escalamento</option>
+            </select>
+            <button
+              onClick={enviarWpp}
+              disabled={wppLoading}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-emerald-dim border border-emerald/20 rounded-lg text-emerald hover:bg-emerald/20 transition-colors disabled:opacity-50"
+            >
+              {wppLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : wppSent ? <Check className="w-3.5 h-3.5" /> : <Send className="w-3.5 h-3.5" />}
+              {wppSent ? 'Enviado!' : 'WhatsApp'}
+            </button>
+          </div>
+          <button
+            onClick={() => setContatoOpen(true)}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-elevated border border-border-default rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-overlay transition-colors"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            Registrar Contato
+          </button>
+          <button
+            onClick={() => setStatusOpen(true)}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-elevated border border-border-default rounded-lg text-ink-secondary hover:text-ink-primary hover:bg-overlay transition-colors"
+          >
+            <ArrowRightLeft className="w-3.5 h-3.5" />
+            Mudar Status
+          </button>
+        </div>
       </div>
 
       <RegistrarContatoModal
