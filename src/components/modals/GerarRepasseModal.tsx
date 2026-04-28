@@ -49,9 +49,9 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
 
   const selecionadasList = dividasPagas.filter((d) => selecionadas.has(d.id))
 
-  // Use valor_negociado se disponível, senão valor_atualizado
-  const valorBase = (d: APIDividaListOut) => (d as any).valor_negociado ?? d.valor_atualizado
-  const pctDivida = (d: APIDividaListOut) => (d as any).comissao_percentual ?? comissaoPercentual
+  // Valor base = negociado (após desconto) se existir, senão atualizado
+  const valorBase = (d: APIDividaListOut) => d.valor_negociado ?? d.valor_atualizado
+  const pctDivida = (d: APIDividaListOut) => d.comissao_percentual ?? comissaoPercentual
 
   const valorBruto = selecionadasList.reduce((s, d) => s + valorBase(d), 0)
   const descontoTotal = selecionadasList.reduce((s, d) => s + (d.valor_atualizado - valorBase(d)), 0)

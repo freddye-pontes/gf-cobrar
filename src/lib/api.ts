@@ -112,7 +112,11 @@ export interface APIDividaListOut {
   credor_id: number
   valor_original: number
   valor_atualizado: number
+  valor_negociado: number | null
+  desconto_aplicado: number | null
+  comissao_percentual: number | null
   data_vencimento: string
+  data_pagamento_confirmado: string | null
   tipo: string
   status: string
   numero_contrato: string | null

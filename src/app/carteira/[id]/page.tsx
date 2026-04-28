@@ -311,7 +311,13 @@ export default async function DevedorDetailPage({
 
                         {/* Per-divida actions — client component */}
                         <DividaActionButtons
-                          divida={{ id: divida.id, status: divida.status, credorNome: divida.credor_nome ?? '' }}
+                          divida={{
+                            id: divida.id,
+                            status: divida.status,
+                            credorNome: divida.credor_nome ?? '',
+                            negociacaoId: negociacao?.id,
+                            negociacaoValor: negociacao?.valor_oferta,
+                          }}
                         />
 
                         {/* History — append-only / immutable */}

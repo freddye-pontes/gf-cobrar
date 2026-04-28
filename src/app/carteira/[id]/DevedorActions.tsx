@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageSquare, Phone, FileText, ArrowRightLeft, Handshake, FilePlus, Send, Loader2, Check } from 'lucide-react'
+import { MessageSquare, Phone, FileText, ArrowRightLeft, Handshake, FilePlus, Send, Loader2, Check, CheckCircle2 } from 'lucide-react'
 import { RegistrarContatoModal } from '@/components/modals/RegistrarContatoModal'
 import { MudarStatusModal } from '@/components/modals/MudarStatusModal'
 import { NovaNegociacaoModal } from '@/components/modals/NovaNegociacaoModal'
 import { NovaDividaModal } from '@/components/modals/NovaDividaModal'
+import { ConfirmModal } from '@/components/modals/ConfirmModal'
+import { negociacoesApi } from '@/lib/api'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
 
@@ -14,6 +16,8 @@ interface DividaInfo {
   id: number
   status: string
   credorNome: string
+  negociacaoId?: number      // ID da negociação ativa (se existir)
+  negociacaoValor?: number   // Valor acordado na negociação
 }
 
 interface Props {
@@ -153,11 +157,28 @@ export function DividaActionButtons({ divida }: { divida: DividaInfo }) {
   const [contatoOpen, setContatoOpen] = useState(false)
   const [statusOpen, setStatusOpen] = useState(false)
   const [negOpen, setNegOpen] = useState(false)
+  const [confirmPagoOpen, setConfirmPagoOpen] = useState(false)
   const [wppLoading, setWppLoading] = useState(false)
   const [wppSent, setWppSent] = useState(false)
   const [template, setTemplate] = useState('primeiro_contato')
 
   const podeNegociar = ['em_aberto', 'em_negociacao'].includes(divida.status)
+  const podePagar = ['em_aberto', 'em_negociacao', 'ptp_ativa'].includes(divida.status)
+
+  async function confirmarPagamento() {
+    if (divida.negociacaoId) {
+      // Has active negotiation → conclude it (saves valor_negociado automatically)
+      await negociacoesApi.update(divida.negociacaoId, { status: 'concluida' })
+    } else {
+      // No negotiation → mark debt directly as pago via status update
+      await fetch(`${API}/dividas/${divida.id}/status/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'pago' }),
+      })
+    }
+    refresh()
+  }
 
   async function enviarWpp() {
     setWppLoading(true)
@@ -188,6 +209,22 @@ export function DividaActionButtons({ divida }: { divida: DividaInfo }) {
           >
             <Handshake className="w-4 h-4" />
             Negociar
+          </button>
+        )}
+
+        {/* CONFIRMAR PAGAMENTO */}
+        {podePagar && (
+          <button
+            onClick={() => setConfirmPagoOpen(true)}
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald-dim border border-emerald/30 text-emerald hover:bg-emerald/20 text-sm font-semibold rounded-xl transition-colors"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            Confirmar Pagamento
+            {divida.negociacaoValor && (
+              <span className="font-mono text-xs opacity-80">
+                — R$ {divida.negociacaoValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            )}
           </button>
         )}
 
@@ -251,6 +288,19 @@ export function DividaActionButtons({ divida }: { divida: DividaInfo }) {
           preselectedDividaId={divida.id}
         />
       )}
+
+      <ConfirmModal
+        open={confirmPagoOpen}
+        onClose={() => setConfirmPagoOpen(false)}
+        title="Confirmar Pagamento"
+        description={
+          divida.negociacaoId
+            ? `Confirmar que o devedor pagou o valor acordado de R$ ${divida.negociacaoValor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) ?? '—'}? A dívida será marcada como PAGA e incluída no próximo repasse.`
+            : `Confirmar o pagamento desta dívida? A dívida será marcada como PAGA e incluída no próximo repasse ao credor.`
+        }
+        confirmLabel="Confirmar Pagamento"
+        onConfirm={confirmarPagamento}
+      />
     </>
   )
 }
