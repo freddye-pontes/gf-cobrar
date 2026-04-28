@@ -460,6 +460,7 @@ def relatorio_repasses_detalhado(
         for d in dividas:
             pct = float(d.comissao_percentual or (d.credor.comissao_percentual if d.credor else 0) or 0)
             base = float(d.valor_negociado or d.valor_atualizado)
+            desconto = float(d.valor_original) - base if float(d.valor_original) > base else float(d.desconto_aplicado or 0)
             comissao_div = round(base * (pct / 100), 2)
             rows.append({
                 "repasse_id": r.id,
@@ -468,8 +469,11 @@ def relatorio_repasses_detalhado(
                 "status_repasse": r.status,
                 "devedor_nome": d.devedor.nome if d.devedor else "",
                 "devedor_doc": d.devedor.cpf_cnpj if d.devedor else "",
+                "numero_contrato": d.numero_contrato or "",
+                "tipo": d.tipo or "",
                 "chave_divida": d.chave_divida,
-                "valor_original": float(d.valor_original),
+                "valor_bruto": float(d.valor_original),
+                "desconto_valor": round(desconto, 2),
                 "desconto_percentual": float(d.desconto_aplicado or 0),
                 "valor_negociado": base,
                 "comissao_percentual": pct,
@@ -480,7 +484,8 @@ def relatorio_repasses_detalhado(
 
     totals = {
         "qtd_dividas": len(rows),
-        "valor_original": sum(r["valor_original"] for r in rows),
+        "valor_bruto": sum(r["valor_bruto"] for r in rows),
+        "desconto_valor": sum(r["desconto_valor"] for r in rows),
         "valor_negociado": sum(r["valor_negociado"] for r in rows),
         "comissao_valor": sum(r["comissao_valor"] for r in rows),
         "valor_repasse": sum(r["valor_repasse"] for r in rows),
@@ -493,22 +498,28 @@ def relatorio_repasses_detalhado(
     wb = Workbook()
     ws = wb.active
     ws.title = "Repasses Detalhado"
-    headers = ["Repasse ID", "Credor", "Período", "Status", "Devedor", "CPF/CNPJ", "Chave Dívida",
-               "Valor Original", "Desconto %", "Valor Negociado", "Comissão %", "Comissão R$", "Valor Repasse", "Data Pagamento"]
-    col_widths = [10, 28, 10, 12, 28, 16, 18, 16, 10, 16, 10, 14, 14, 14]
-    currency_cols = {8, 10, 12, 13}
+    headers = [
+        "Nº Contrato", "Devedor", "Tipo Pagamento", "Nº Dívida",
+        "Valor Bruto", "Desconto (R$)", "Desconto (%)", "Valor Líquido",
+        "Comissão %", "Comissão R$", "Repasse",
+        "Credor", "Período", "Status", "Data Pagamento"
+    ]
+    col_widths = [16, 28, 14, 20, 16, 14, 12, 16, 10, 14, 14, 26, 10, 12, 14]
+    currency_cols = {5, 6, 8, 10, 11}
     _style_header(ws, headers, col_widths)
     for row_num, r in enumerate(rows, start=2):
         ws.append([
-            r["repasse_id"], r["credor_nome"], r["periodo"], r["status_repasse"],
-            r["devedor_nome"], r["devedor_doc"], r["chave_divida"],
-            r["valor_original"], r["desconto_percentual"], r["valor_negociado"],
-            r["comissao_percentual"], r["comissao_valor"], r["valor_repasse"], r["data_pagamento"] or "",
+            r["numero_contrato"], r["devedor_nome"], r["tipo"].title(), r["chave_divida"],
+            r["valor_bruto"], r["desconto_valor"], r["desconto_percentual"], r["valor_negociado"],
+            r["comissao_percentual"], r["comissao_valor"], r["valor_repasse"],
+            r["credor_nome"], r["periodo"], r["status_repasse"], r["data_pagamento"] or "",
         ])
         _style_row(ws, row_num, currency_cols)
     total_row = len(rows) + 2
     _add_total_row(ws, total_row, [
-        "TOTAL", "", "", "", "", "", "",
-        totals["valor_original"], "", totals["valor_negociado"], "", totals["comissao_valor"], totals["valor_repasse"], "",
+        "TOTAL", "", "", "",
+        totals["valor_bruto"], totals["desconto_valor"], "",  totals["valor_negociado"],
+        "", totals["comissao_valor"], totals["valor_repasse"],
+        "", "", "", "",
     ], currency_cols)
     return _xlsx_response(wb, f"repasses_detalhado_{date.today()}.xlsx")

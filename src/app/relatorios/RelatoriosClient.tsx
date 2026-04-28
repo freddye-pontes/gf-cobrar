@@ -11,9 +11,23 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.
 type Tab = 'repasses' | 'comissoes' | 'recuperado'
 
 interface RepasseRow {
-  id: number; credor_nome: string; periodo: string; qtd_dividas: number
-  valor_bruto: number; comissao: number; valor_liquido: number
-  status: string; created_at: string; executado_em: string
+  repasse_id: number
+  numero_contrato: string
+  devedor_nome: string
+  devedor_doc: string
+  tipo: string
+  chave_divida: string
+  valor_bruto: number
+  desconto_valor: number
+  desconto_percentual: number
+  valor_negociado: number
+  comissao_percentual: number
+  comissao_valor: number
+  valor_repasse: number
+  credor_nome: string
+  periodo: string
+  status_repasse: string
+  data_pagamento: string | null
 }
 interface ComissaoRow {
   credor_nome: string; comissao_pct: number; qtd_lotes: number; periodos: string
@@ -62,10 +76,14 @@ export function RelatoriosClient({ credores }: Props) {
     return p.toString() ? `?${p.toString()}` : ''
   }
 
+  function endpointForTab() {
+    return tab === 'repasses' ? 'repasses/detalhado' : tab
+  }
+
   async function handleBuscar() {
     setLoading(true)
     try {
-      const res = await fetch(`${BASE_URL}/relatorios/${tab}${buildQS()}`)
+      const res = await fetch(`${BASE_URL}/relatorios/${endpointForTab()}${buildQS()}`)
       const json = await res.json()
       setData(json.data ?? [])
       setTotals(json.totals ?? {})
@@ -77,7 +95,7 @@ export function RelatoriosClient({ credores }: Props) {
   function handleExport() {
     const qs = buildQS()
     const sep = qs ? '&' : '?'
-    window.open(`${BASE_URL}/relatorios/${tab}${qs}${sep}format=xlsx`, '_blank')
+    window.open(`${BASE_URL}/relatorios/${endpointForTab()}${qs}${sep}format=xlsx`, '_blank')
   }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -214,48 +232,79 @@ export function RelatoriosClient({ credores }: Props) {
                 <div className="py-12 text-center text-ink-muted text-sm">Nenhum resultado encontrado.</div>
               ) : (
                 <>
-                  {/* ── Repasses table ── */}
+                  {/* ── Repasses table (detalhado por dívida) ── */}
                   {tab === 'repasses' && (
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-border-subtle bg-elevated/50">
-                            <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Credor</th>
-                            <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Período</th>
-                            <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Dívidas</th>
-                            <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Valor Bruto</th>
-                            <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Comissão</th>
-                            <th className="text-right px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Valor Líquido</th>
-                            <th className="text-center px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Status</th>
-                            <th className="text-left px-4 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted">Gerado em</th>
+                            {[
+                              ['Nº Contrato', 'left'],
+                              ['Devedor',     'left'],
+                              ['Tipo',        'left'],
+                              ['Nº Dívida',   'left'],
+                              ['Valor Bruto', 'right'],
+                              ['Desconto (R$)','right'],
+                              ['Desc (%)',    'right'],
+                              ['Valor Líquido','right'],
+                              ['Com %',       'right'],
+                              ['Comissão R$', 'right'],
+                              ['Repasse',     'right'],
+                              ['Credor',      'left'],
+                              ['Período',     'left'],
+                              ['Status',      'center'],
+                              ['Pago em',     'left'],
+                            ].map(([h, align]) => (
+                              <th key={h} className={`text-${align} px-3 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted whitespace-nowrap`}>{h}</th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border-subtle">
-                          {(data as RepasseRow[]).map((r) => (
-                            <tr key={r.id} className="hover:bg-elevated/30">
-                              <td className="px-4 py-3 text-ink-primary font-medium">{r.credor_nome}</td>
-                              <td className="px-4 py-3 font-mono text-ink-secondary">{r.periodo}</td>
-                              <td className="px-4 py-3 font-mono text-ink-secondary text-right">{r.qtd_dividas}</td>
-                              <td className="px-4 py-3 font-mono text-ink-primary text-right">{formatCurrency(r.valor_bruto)}</td>
-                              <td className="px-4 py-3 font-mono text-amber text-right">-{formatCurrency(r.comissao)}</td>
-                              <td className="px-4 py-3 font-mono font-bold text-emerald-400 text-right">{formatCurrency(r.valor_liquido)}</td>
-                              <td className="px-4 py-3 text-center">
-                                <span className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${statusColors[r.status] ?? ''}`}>
-                                  {r.status.toUpperCase()}
+                          {(data as RepasseRow[]).map((r, i) => (
+                            <tr key={i} className="hover:bg-elevated/30">
+                              <td className="px-3 py-2.5 font-mono text-ink-muted text-xs">{r.numero_contrato || '—'}</td>
+                              <td className="px-3 py-2.5 text-ink-primary font-medium text-xs max-w-[160px] truncate">{r.devedor_nome}</td>
+                              <td className="px-3 py-2.5 text-ink-secondary text-xs capitalize">{r.tipo}</td>
+                              <td className="px-3 py-2.5 font-mono text-ink-muted text-[10px]">{r.chave_divida}</td>
+                              <td className="px-3 py-2.5 font-mono text-ink-primary text-right text-xs">{formatCurrency(r.valor_bruto)}</td>
+                              <td className="px-3 py-2.5 font-mono text-right text-xs">
+                                <span className={r.desconto_valor > 0 ? 'text-amber' : 'text-ink-muted'}>
+                                  {r.desconto_valor > 0 ? `-${formatCurrency(r.desconto_valor)}` : '—'}
                                 </span>
                               </td>
-                              <td className="px-4 py-3 font-mono text-ink-muted text-xs">{r.created_at}</td>
+                              <td className="px-3 py-2.5 font-mono text-right text-xs">
+                                <span className={r.desconto_percentual > 0 ? 'text-amber' : 'text-ink-muted'}>
+                                  {r.desconto_percentual > 0 ? `${r.desconto_percentual}%` : '—'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 font-mono text-ink-primary text-right text-xs font-medium">{formatCurrency(r.valor_negociado)}</td>
+                              <td className="px-3 py-2.5 font-mono text-ink-muted text-right text-xs">{r.comissao_percentual}%</td>
+                              <td className="px-3 py-2.5 font-mono text-amber text-right text-xs">-{formatCurrency(r.comissao_valor)}</td>
+                              <td className="px-3 py-2.5 font-mono font-bold text-emerald-400 text-right text-xs">{formatCurrency(r.valor_repasse)}</td>
+                              <td className="px-3 py-2.5 text-ink-secondary text-xs max-w-[120px] truncate">{r.credor_nome}</td>
+                              <td className="px-3 py-2.5 font-mono text-ink-secondary text-xs">{r.periodo}</td>
+                              <td className="px-3 py-2.5 text-center">
+                                <span className={`text-[10px] font-mono border rounded px-1.5 py-0.5 ${statusColors[r.status_repasse] ?? ''}`}>
+                                  {r.status_repasse?.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 font-mono text-ink-muted text-xs">
+                                {r.data_pagamento ? new Date(r.data_pagamento + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                         <tfoot>
-                          <tr className="bg-elevated/50 border-t border-border-default font-bold">
-                            <td className="px-4 py-3 text-ink-primary text-xs">TOTAL</td>
-                            <td colSpan={2} className="px-4 py-3 font-mono text-xs text-ink-muted text-right">{data.length} lotes</td>
-                            <td className="px-4 py-3 font-mono text-ink-primary text-right">{formatCurrency(totals.valor_bruto ?? 0)}</td>
-                            <td className="px-4 py-3 font-mono text-amber text-right">-{formatCurrency(totals.comissao ?? 0)}</td>
-                            <td className="px-4 py-3 font-mono text-emerald-400 text-right">{formatCurrency(totals.valor_liquido ?? 0)}</td>
-                            <td colSpan={2} />
+                          <tr className="bg-elevated/50 border-t-2 border-border-default font-bold">
+                            <td colSpan={4} className="px-3 py-3 text-ink-primary text-xs">TOTAL — {data.length} dívida{data.length !== 1 ? 's' : ''}</td>
+                            <td className="px-3 py-3 font-mono text-ink-primary text-right text-xs">{formatCurrency(totals.valor_bruto ?? 0)}</td>
+                            <td className="px-3 py-3 font-mono text-amber text-right text-xs">-{formatCurrency(totals.desconto_valor ?? 0)}</td>
+                            <td />
+                            <td className="px-3 py-3 font-mono text-ink-primary text-right text-xs">{formatCurrency(totals.valor_negociado ?? 0)}</td>
+                            <td />
+                            <td className="px-3 py-3 font-mono text-amber text-right text-xs">-{formatCurrency(totals.comissao_valor ?? 0)}</td>
+                            <td className="px-3 py-3 font-mono text-emerald-400 text-right text-xs">{formatCurrency(totals.valor_repasse ?? 0)}</td>
+                            <td colSpan={4} />
                           </tr>
                         </tfoot>
                       </table>
