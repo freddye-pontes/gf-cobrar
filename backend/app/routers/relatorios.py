@@ -459,9 +459,14 @@ def relatorio_repasses_detalhado(
 
         for d in dividas:
             pct = float(d.comissao_percentual or (d.credor.comissao_percentual if d.credor else 0) or 0)
-            base = float(d.valor_negociado or d.valor_atualizado)
-            desconto = float(d.valor_original) - base if float(d.valor_original) > base else float(d.desconto_aplicado or 0)
-            comissao_div = round(base * (pct / 100), 2)
+            valor_bruto = float(d.valor_original)
+            valor_atualizado = float(d.valor_atualizado)
+            # Valor recuperado = valor negociado (após desconto da negociação)
+            valor_recuperado = float(d.valor_negociado) if d.valor_negociado else valor_atualizado
+            # Desconto = diferença entre atualizado e recuperado
+            desconto_valor = round(valor_atualizado - valor_recuperado, 2)
+            desconto_pct = float(d.desconto_aplicado or 0)
+            comissao_div = round(valor_recuperado * (pct / 100), 2)
             rows.append({
                 "repasse_id": r.id,
                 "credor_nome": r.credor.razao_social if r.credor else "",
@@ -472,21 +477,23 @@ def relatorio_repasses_detalhado(
                 "numero_contrato": d.numero_contrato or "",
                 "tipo": d.tipo or "",
                 "chave_divida": d.chave_divida,
-                "valor_bruto": float(d.valor_original),
-                "desconto_valor": round(desconto, 2),
-                "desconto_percentual": float(d.desconto_aplicado or 0),
-                "valor_negociado": base,
+                "valor_bruto": valor_bruto,
+                "valor_atualizado": valor_atualizado,
+                "desconto_valor": desconto_valor if desconto_valor > 0 else 0.0,
+                "desconto_percentual": desconto_pct,
+                "valor_recuperado": valor_recuperado,
                 "comissao_percentual": pct,
                 "comissao_valor": comissao_div,
-                "valor_repasse": round(base - comissao_div, 2),
+                "valor_repasse": round(valor_recuperado - comissao_div, 2),
                 "data_pagamento": d.data_pagamento_confirmado.isoformat() if d.data_pagamento_confirmado else None,
             })
 
     totals = {
         "qtd_dividas": len(rows),
         "valor_bruto": sum(r["valor_bruto"] for r in rows),
+        "valor_atualizado": sum(r["valor_atualizado"] for r in rows),
         "desconto_valor": sum(r["desconto_valor"] for r in rows),
-        "valor_negociado": sum(r["valor_negociado"] for r in rows),
+        "valor_recuperado": sum(r["valor_recuperado"] for r in rows),
         "comissao_valor": sum(r["comissao_valor"] for r in rows),
         "valor_repasse": sum(r["valor_repasse"] for r in rows),
     }
@@ -499,27 +506,27 @@ def relatorio_repasses_detalhado(
     ws = wb.active
     ws.title = "Repasses Detalhado"
     headers = [
-        "Nº Contrato", "Devedor", "Tipo Pagamento", "Nº Dívida",
-        "Valor Bruto", "Desconto (R$)", "Desconto (%)", "Valor Líquido",
-        "Comissão %", "Comissão R$", "Repasse",
-        "Credor", "Período", "Status", "Data Pagamento"
+        "Nº Contrato", "Devedor", "Tipo", "Nº Dívida",
+        "Valor Bruto", "Valor Atualizado", "Desconto (R$)", "Desc (%)", "Valor Recuperado",
+        "Com %", "Comissão R$", "Repasse",
+        "Credor", "Período", "Status", "Pago em",
     ]
-    col_widths = [16, 28, 14, 20, 16, 14, 12, 16, 10, 14, 14, 26, 10, 12, 14]
-    currency_cols = {5, 6, 8, 10, 11}
+    col_widths = [16, 28, 12, 20, 16, 16, 14, 10, 16, 10, 14, 14, 26, 10, 12, 14]
+    currency_cols = {5, 6, 7, 9, 11, 12}
     _style_header(ws, headers, col_widths)
     for row_num, r in enumerate(rows, start=2):
         ws.append([
             r["numero_contrato"], r["devedor_nome"], r["tipo"].title(), r["chave_divida"],
-            r["valor_bruto"], r["desconto_valor"], r["desconto_percentual"], r["valor_negociado"],
-            r["comissao_percentual"], r["comissao_valor"], r["valor_repasse"],
+            r["valor_bruto"], r["valor_atualizado"], r["desconto_valor"], r["desconto_percentual"],
+            r["valor_recuperado"], r["comissao_percentual"], r["comissao_valor"], r["valor_repasse"],
             r["credor_nome"], r["periodo"], r["status_repasse"], r["data_pagamento"] or "",
         ])
         _style_row(ws, row_num, currency_cols)
     total_row = len(rows) + 2
     _add_total_row(ws, total_row, [
         "TOTAL", "", "", "",
-        totals["valor_bruto"], totals["desconto_valor"], "",  totals["valor_negociado"],
-        "", totals["comissao_valor"], totals["valor_repasse"],
+        totals["valor_bruto"], totals["valor_atualizado"], totals["desconto_valor"], "",
+        totals["valor_recuperado"], "", totals["comissao_valor"], totals["valor_repasse"],
         "", "", "", "",
     ], currency_cols)
     return _xlsx_response(wb, f"repasses_detalhado_{date.today()}.xlsx")

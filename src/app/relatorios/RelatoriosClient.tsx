@@ -18,9 +18,10 @@ interface RepasseRow {
   tipo: string
   chave_divida: string
   valor_bruto: number
+  valor_atualizado: number
   desconto_valor: number
   desconto_percentual: number
-  valor_negociado: number
+  valor_recuperado: number
   comissao_percentual: number
   comissao_valor: number
   valor_repasse: number
@@ -239,21 +240,22 @@ export function RelatoriosClient({ credores }: Props) {
                         <thead>
                           <tr className="border-b border-border-subtle bg-elevated/50">
                             {[
-                              ['Nº Contrato', 'left'],
-                              ['Devedor',     'left'],
-                              ['Tipo',        'left'],
-                              ['Nº Dívida',   'left'],
-                              ['Valor Bruto', 'right'],
-                              ['Desconto (R$)','right'],
-                              ['Desc (%)',    'right'],
-                              ['Valor Líquido','right'],
-                              ['Com %',       'right'],
-                              ['Comissão R$', 'right'],
-                              ['Repasse',     'right'],
-                              ['Credor',      'left'],
-                              ['Período',     'left'],
-                              ['Status',      'center'],
-                              ['Pago em',     'left'],
+                              ['Nº Contrato',    'left'],
+                              ['Devedor',        'left'],
+                              ['Tipo',           'left'],
+                              ['Nº Dívida',      'left'],
+                              ['Valor Bruto',    'right'],
+                              ['Valor Atualizado','right'],
+                              ['Desconto (R$)',   'right'],
+                              ['Desc (%)',        'right'],
+                              ['Valor Recuperado','right'],
+                              ['Com %',           'right'],
+                              ['Comissão R$',     'right'],
+                              ['Repasse',         'right'],
+                              ['Credor',          'left'],
+                              ['Período',         'left'],
+                              ['Status',          'center'],
+                              ['Pago em',         'left'],
                             ].map(([h, align]) => (
                               <th key={h} className={`text-${align} px-3 py-3 text-[10px] font-mono uppercase tracking-wider text-ink-muted whitespace-nowrap`}>{h}</th>
                             ))}
@@ -266,7 +268,8 @@ export function RelatoriosClient({ credores }: Props) {
                               <td className="px-3 py-2.5 text-ink-primary font-medium text-xs max-w-[160px] truncate">{r.devedor_nome}</td>
                               <td className="px-3 py-2.5 text-ink-secondary text-xs capitalize">{r.tipo}</td>
                               <td className="px-3 py-2.5 font-mono text-ink-muted text-[10px]">{r.chave_divida}</td>
-                              <td className="px-3 py-2.5 font-mono text-ink-primary text-right text-xs">{formatCurrency(r.valor_bruto)}</td>
+                              <td className="px-3 py-2.5 font-mono text-ink-secondary text-right text-xs">{formatCurrency(r.valor_bruto)}</td>
+                              <td className="px-3 py-2.5 font-mono text-ink-primary text-right text-xs font-medium">{formatCurrency(r.valor_atualizado)}</td>
                               <td className="px-3 py-2.5 font-mono text-right text-xs">
                                 <span className={r.desconto_valor > 0 ? 'text-amber' : 'text-ink-muted'}>
                                   {r.desconto_valor > 0 ? `-${formatCurrency(r.desconto_valor)}` : '—'}
@@ -277,10 +280,10 @@ export function RelatoriosClient({ credores }: Props) {
                                   {r.desconto_percentual > 0 ? `${r.desconto_percentual}%` : '—'}
                                 </span>
                               </td>
-                              <td className="px-3 py-2.5 font-mono text-ink-primary text-right text-xs font-medium">{formatCurrency(r.valor_negociado)}</td>
+                              <td className="px-3 py-2.5 font-mono text-emerald-400 text-right text-xs font-medium">{formatCurrency(r.valor_recuperado)}</td>
                               <td className="px-3 py-2.5 font-mono text-ink-muted text-right text-xs">{r.comissao_percentual}%</td>
                               <td className="px-3 py-2.5 font-mono text-amber text-right text-xs">-{formatCurrency(r.comissao_valor)}</td>
-                              <td className="px-3 py-2.5 font-mono font-bold text-emerald-400 text-right text-xs">{formatCurrency(r.valor_repasse)}</td>
+                              <td className="px-3 py-2.5 font-mono font-bold text-accent-light text-right text-xs">{formatCurrency(r.valor_repasse)}</td>
                               <td className="px-3 py-2.5 text-ink-secondary text-xs max-w-[120px] truncate">{r.credor_nome}</td>
                               <td className="px-3 py-2.5 font-mono text-ink-secondary text-xs">{r.periodo}</td>
                               <td className="px-3 py-2.5 text-center">
@@ -297,13 +300,14 @@ export function RelatoriosClient({ credores }: Props) {
                         <tfoot>
                           <tr className="bg-elevated/50 border-t-2 border-border-default font-bold">
                             <td colSpan={4} className="px-3 py-3 text-ink-primary text-xs">TOTAL — {data.length} dívida{data.length !== 1 ? 's' : ''}</td>
-                            <td className="px-3 py-3 font-mono text-ink-primary text-right text-xs">{formatCurrency(totals.valor_bruto ?? 0)}</td>
+                            <td className="px-3 py-3 font-mono text-ink-secondary text-right text-xs">{formatCurrency(totals.valor_bruto ?? 0)}</td>
+                            <td className="px-3 py-3 font-mono text-ink-primary text-right text-xs">{formatCurrency(totals.valor_atualizado ?? 0)}</td>
                             <td className="px-3 py-3 font-mono text-amber text-right text-xs">-{formatCurrency(totals.desconto_valor ?? 0)}</td>
                             <td />
-                            <td className="px-3 py-3 font-mono text-ink-primary text-right text-xs">{formatCurrency(totals.valor_negociado ?? 0)}</td>
+                            <td className="px-3 py-3 font-mono text-emerald-400 text-right text-xs">{formatCurrency(totals.valor_recuperado ?? 0)}</td>
                             <td />
                             <td className="px-3 py-3 font-mono text-amber text-right text-xs">-{formatCurrency(totals.comissao_valor ?? 0)}</td>
-                            <td className="px-3 py-3 font-mono text-emerald-400 text-right text-xs">{formatCurrency(totals.valor_repasse ?? 0)}</td>
+                            <td className="px-3 py-3 font-mono text-accent-light text-right text-xs">{formatCurrency(totals.valor_repasse ?? 0)}</td>
                             <td colSpan={4} />
                           </tr>
                         </tfoot>
