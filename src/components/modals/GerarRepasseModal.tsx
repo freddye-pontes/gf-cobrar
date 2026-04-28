@@ -31,7 +31,7 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
     const now = new Date()
     setPeriodo(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`)
     setLoadingDividas(true)
-    dividasApi.list({ credor_id: credorId, status: 'pago' })
+    dividasApi.list({ credor_id: credorId, status: 'pago', sem_repasse: true })
       .then((data) => { setDividasPagas(data); setSelecionadas(new Set(data.map((d) => d.id))) })
       .catch(() => {})
       .finally(() => setLoadingDividas(false))

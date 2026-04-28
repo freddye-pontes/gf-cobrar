@@ -99,6 +99,7 @@ def listar_dividas(
     status_filter: str | None = Query(None, alias="status"),
     credor_id: int | None = Query(None),
     devedor_id: int | None = Query(None),
+    sem_repasse: bool = Query(False),
     skip: int = 0,
     limit: int = 200,
     db: Session = Depends(get_db),
@@ -118,6 +119,12 @@ def listar_dividas(
         q = q.filter(Divida.credor_id == credor_id)
     if devedor_id:
         q = q.filter(Divida.devedor_id == devedor_id)
+    if sem_repasse:
+        from app.models.repasse import Repasse as RepasseModel
+        repasses = db.query(RepasseModel.dividas_ids).all()
+        ids_em_repasse = {str(did) for r in repasses for did in (r.dividas_ids or [])}
+        if ids_em_repasse:
+            q = q.filter(Divida.id.notin_([int(x) for x in ids_em_repasse if x.isdigit()]))
     items = q.offset(skip).limit(limit).all()
     result = [_build_list_out(d, db) for d in items]
     db.commit()

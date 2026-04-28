@@ -228,11 +228,12 @@ export const dashboardApi = {
 // ── Dividas ───────────────────────────────────────────────────────────────────
 
 export const dividasApi = {
-  list: (params?: { status?: string; credor_id?: number; devedor_id?: number }) => {
+  list: (params?: { status?: string; credor_id?: number; devedor_id?: number; sem_repasse?: boolean }) => {
     const qs = new URLSearchParams()
     if (params?.status) qs.set('status', params.status)
     if (params?.credor_id) qs.set('credor_id', String(params.credor_id))
     if (params?.devedor_id) qs.set('devedor_id', String(params.devedor_id))
+    if (params?.sem_repasse) qs.set('sem_repasse', 'true')
     const q = qs.toString()
     return get<APIDividaListOut[]>(`/dividas${q ? `?${q}` : ''}`)
   },
