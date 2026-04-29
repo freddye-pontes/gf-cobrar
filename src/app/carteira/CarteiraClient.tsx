@@ -241,7 +241,7 @@ export function CarteiraClient({ dividas, credores }: Props) {
 
                   {/* Col 2 — Chave */}
                   <span className="hidden md:flex items-center">
-                    <span className="font-mono text-[11px] font-semibold text-white bg-accent/10 border border-accent/20 rounded px-1.5 py-0.5 truncate">
+                    <span className="font-mono text-[11px] font-semibold text-accent border border-accent/30 rounded px-1.5 py-0.5 truncate bg-accent/8">
                       {row.chave_divida}
                     </span>
                   </span>
