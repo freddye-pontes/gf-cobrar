@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
   LayoutDashboard,
   Users,
@@ -41,21 +42,22 @@ export function Sidebar() {
     <>
       {/* Logo */}
       <div className={cn(
-        'flex items-center gap-3 border-b border-border-subtle',
-        collapsed ? 'justify-center px-0 py-4' : 'px-4 py-4'
+        'flex items-center border-b border-border-subtle',
+        collapsed ? 'justify-center px-2 py-3' : 'px-3 py-3'
       )}>
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent shrink-0 glow-accent">
-          <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <div className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">
-              GF Recebíveis
-            </div>
-            <div className="font-mono text-ink-muted text-[10px] tracking-wider mt-0.5">
-              MVP · v1.0
-            </div>
+        {collapsed ? (
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent shrink-0">
+            <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
+        ) : (
+          <Image
+            src="/logo.png"
+            alt="GF Recebíveis"
+            width={160}
+            height={40}
+            className="object-contain h-10 w-auto"
+            priority
+          />
         )}
         {/* Close button on mobile */}
         <button
@@ -161,16 +163,11 @@ export function Sidebar() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-surface border-b border-border-subtle">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-2 bg-surface border-b border-border-subtle">
         <button onClick={() => setMobileOpen(true)} className="text-ink-secondary hover:text-ink-primary">
           <Menu className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-6 h-6 rounded bg-accent">
-            <Activity className="w-3 h-3 text-white" strokeWidth={2.5} />
-          </div>
-          <span className="font-display font-bold text-ink-primary text-sm tracking-widest uppercase">GF Recebíveis</span>
-        </div>
+        <Image src="/logo.png" alt="GF Recebíveis" width={120} height={30} className="object-contain h-8 w-auto" priority />
       </div>
 
       {/* Mobile overlay */}
