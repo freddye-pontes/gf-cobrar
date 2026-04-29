@@ -75,8 +75,8 @@ export function NegociacaoClient({ negociacoes }: Props) {
                 <button key={s} onClick={() => setStatusFilter(statusFilter === s ? '' : s)}
                   className="relative overflow-hidden rounded-xl p-4 text-left transition-all duration-200 hover:brightness-110 border"
                   style={{
-                    background: `linear-gradient(135deg, ${cfg.bg} 0%, #1a1a1a 100%)`,
-                    borderColor: isActive ? cfg.border : 'rgba(45,45,45,0.8)',
+                    background: cfg.bg,
+                    borderColor: isActive ? cfg.border : '#E2E8F0',
                     boxShadow: isActive ? `0 0 20px ${cfg.bg}` : 'none',
                   }}
                 >

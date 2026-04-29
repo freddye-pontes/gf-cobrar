@@ -192,10 +192,10 @@ export function CarteiraClient({ dividas, credores }: Props) {
         {/* Table */}
         <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '80ms', opacity: 0 }}>
           <div className="hidden md:grid grid-cols-[1fr_130px_140px_110px_120px_80px_64px] gap-3 px-5 py-3 border-b"
-            style={{ background: '#0d0d0d', borderColor: 'rgba(245,158,11,0.2)' }}>
+            style={{ background: '#F1F5F9', borderColor: '#E2E8F0' }}>
             {['Devedor', 'Chave', 'Credor', 'Aging', 'Valor Atual', 'Status', ''].map((h) => (
               <span key={h} className="text-[10px] font-mono uppercase tracking-wider"
-                style={{ color: h ? '#f59e0b' : 'transparent' }}>{h || '·'}</span>
+                style={{ color: h ? '#64748B' : 'transparent' }}>{h || '·'}</span>
             ))}
           </div>
 

@@ -118,7 +118,7 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
               <div className="flex items-center gap-2 px-3 py-2 bg-elevated border-b border-border-default text-[10px] font-mono uppercase tracking-wider text-ink-muted">
                 <input type="checkbox"
                   checked={selecionadas.size === dividasPagas.length && dividasPagas.length > 0}
-                  onChange={toggleAll} className="w-3.5 h-3.5 accent-[#3b82f6] shrink-0" />
+                  onChange={toggleAll} className="w-3.5 h-3.5 accent-[#FF6600] shrink-0" />
                 <span className="flex-1">Devedor</span>
                 <span className="w-24 text-right">Original</span>
                 <span className="w-20 text-right">Negociado</span>
@@ -132,7 +132,7 @@ export function GerarRepasseModal({ open, onClose, onSuccess, credorId, credorNo
                   return (
                     <label key={d.id} className="flex items-center gap-2 px-3 py-2 hover:bg-elevated/50 cursor-pointer">
                       <input type="checkbox" checked={selecionadas.has(d.id)} onChange={() => toggleDivida(d.id)}
-                        className="w-3.5 h-3.5 accent-[#3b82f6] shrink-0" />
+                        className="w-3.5 h-3.5 accent-[#FF6600] shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-ink-primary text-xs font-medium truncate">{d.devedor_nome}</p>
                         <p className="text-ink-muted text-[10px] font-mono">{d.chave_divida}</p>

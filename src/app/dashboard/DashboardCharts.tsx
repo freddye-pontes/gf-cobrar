@@ -26,23 +26,24 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  em_aberto: '#3b82f6',
-  em_negociacao: '#fbbf24',
-  ptp_ativa: '#a78bfa',
-  judicial: '#f87171',
-  pago: '#34d399',
-  encerrado: '#475569',
+  em_aberto: '#FF6600',
+  em_negociacao: '#D97706',
+  ptp_ativa: '#7C3AED',
+  judicial: '#E63946',
+  pago: '#10B981',
+  encerrado: '#94A3B8',
 }
 
-const AGING_COLORS = ['#34d399', '#fbbf24', '#f97316', '#ef4444']
+const AGING_COLORS = ['#10B981', '#D97706', '#FF6600', '#E63946']
 
 const tooltipStyle = {
-  background: '#0f1f3d',
-  border: '1px solid #1e3566',
+  background: '#FFFFFF',
+  border: '1px solid #E2E8F0',
   borderRadius: '8px',
   fontSize: '11px',
   fontFamily: 'JetBrains Mono',
-  color: '#dce8fc',
+  color: '#1A1A1A',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
 }
 
 export function DashboardCharts({ chartData, statusCarteira, agingData, ptpsQuebradaPct, ptpsAtivas }: Props) {
@@ -62,17 +63,17 @@ export function DashboardCharts({ chartData, statusCarteira, agingData, ptpsQueb
         ) : (
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={chartData} margin={{ top: 4, right: 4, left: -28, bottom: 0 }} barSize={18}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1a2d50" vertical={false} />
-              <XAxis dataKey="mes" tick={{ fill: '#3d5580', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+              <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fill: '#94A3B8', fontSize: 10, fontFamily: 'JetBrains Mono' }}
                 axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#3d5580', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+              <YAxis tick={{ fill: '#94A3B8', fontSize: 9, fontFamily: 'JetBrains Mono' }}
                 tickFormatter={(v: number) => `${(v / 1000).toFixed(0)}K`}
                 axisLine={false} tickLine={false} />
               <Tooltip contentStyle={tooltipStyle}
                 formatter={(value: number) => [formatCurrencyCompact(value), 'Recuperado']} />
-              <Bar dataKey="recuperado" fill="#10b981" radius={[3, 3, 0, 0]}>
+              <Bar dataKey="recuperado" fill="#10B981" radius={[3, 3, 0, 0]}>
                 {chartData.map((entry, i) => (
-                  <Cell key={i} fill={entry.recuperado > 0 ? '#10b981' : '#1e3566'} />
+                  <Cell key={i} fill={entry.recuperado > 0 ? '#10B981' : '#E2E8F0'} />
                 ))}
               </Bar>
             </BarChart>

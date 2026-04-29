@@ -55,12 +55,12 @@ export function getStatusLabel(status: StatusDivida): string {
 
 export function getStatusColors(status: StatusDivida): { bg: string; text: string; border: string } {
   const map: Record<StatusDivida, { bg: string; text: string; border: string }> = {
-    em_aberto: { bg: 'rgba(37,99,235,0.12)', text: '#3b82f6', border: 'rgba(37,99,235,0.3)' },
-    em_negociacao: { bg: 'rgba(245,158,11,0.12)', text: '#fbbf24', border: 'rgba(245,158,11,0.3)' },
-    ptp_ativa: { bg: 'rgba(139,92,246,0.12)', text: '#a78bfa', border: 'rgba(139,92,246,0.3)' },
-    pago: { bg: 'rgba(16,185,129,0.12)', text: '#34d399', border: 'rgba(16,185,129,0.3)' },
-    judicial: { bg: 'rgba(239,68,68,0.12)', text: '#f87171', border: 'rgba(239,68,68,0.3)' },
-    encerrado: { bg: 'rgba(61,85,128,0.2)', text: '#7a9bc8', border: 'rgba(61,85,128,0.4)' },
+    em_aberto: { bg: 'rgba(255,102,0,0.10)', text: '#E65C00', border: 'rgba(255,102,0,0.25)' },
+    em_negociacao: { bg: 'rgba(217,119,6,0.10)', text: '#D97706', border: 'rgba(217,119,6,0.25)' },
+    ptp_ativa: { bg: 'rgba(124,58,237,0.10)', text: '#7C3AED', border: 'rgba(124,58,237,0.25)' },
+    pago: { bg: 'rgba(16,185,129,0.10)', text: '#059669', border: 'rgba(16,185,129,0.25)' },
+    judicial: { bg: 'rgba(230,57,70,0.10)', text: '#E63946', border: 'rgba(230,57,70,0.25)' },
+    encerrado: { bg: 'rgba(100,116,139,0.10)', text: '#64748B', border: 'rgba(100,116,139,0.25)' },
   }
   return map[status]
 }
@@ -86,9 +86,9 @@ export function getTipoNegociacaoLabel(tipo: TipoNegociacao): string {
 
 export function getUrgenciaColors(urgencia: UrgenciaItem): string {
   const map: Record<UrgenciaItem, string> = {
-    alta: '#ef4444',
-    media: '#f59e0b',
-    baixa: '#3b82f6',
+    alta: '#E63946',
+    media: '#D97706',
+    baixa: '#FF6600',
   }
   return map[urgencia]
 }

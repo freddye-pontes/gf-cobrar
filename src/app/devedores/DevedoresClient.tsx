@@ -193,10 +193,10 @@ export function DevedoresClient({ devedores: initialDevedores }: Props) {
             <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '120ms', opacity: 0 }}>
               {/* Desktop header */}
               <div className="hidden md:grid grid-cols-[1fr_150px_160px_150px_80px_64px] gap-3 px-5 py-3 border-b"
-                style={{ background: '#0d0d0d', borderColor: 'rgba(245,158,11,0.2)' }}>
+                style={{ background: '#F1F5F9', borderColor: '#E2E8F0' }}>
                 {['Devedor', 'Documento', 'Contato', 'Localização', 'Cadastro', ''].map((h) => (
                   <span key={h} className="text-[10px] font-mono uppercase tracking-wider"
-                    style={{ color: h ? '#f59e0b' : 'transparent' }}>{h || '·'}</span>
+                    style={{ color: h ? '#64748B' : 'transparent' }}>{h || '·'}</span>
                 ))}
               </div>
 

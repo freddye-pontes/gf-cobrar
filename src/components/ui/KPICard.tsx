@@ -15,20 +15,18 @@ interface KPICardProps {
 }
 
 const variantMap: Record<KpiVariant, {
-  bg: string
-  border: string
+  leftBorder: string
   text: string
   badge: string
-  glow: string
 }> = {
-  blue:    { bg: 'from-blue-900/50 to-bg-card',    border: 'border-blue-700/30',    text: 'text-blue-400',    badge: 'bg-blue-400/15',    glow: 'rgba(59,130,246,0.15)' },
-  emerald: { bg: 'from-emerald-900/50 to-bg-card', border: 'border-emerald-700/30', text: 'text-emerald-400', badge: 'bg-emerald-400/15', glow: 'rgba(16,185,129,0.15)' },
-  teal:    { bg: 'from-cyan-900/50 to-bg-card',    border: 'border-cyan-700/30',    text: 'text-cyan-400',    badge: 'bg-cyan-400/15',    glow: 'rgba(6,182,212,0.15)'  },
-  amber:   { bg: 'from-amber-900/50 to-bg-card',   border: 'border-amber-700/30',   text: 'text-amber-400',   badge: 'bg-amber-400/15',   glow: 'rgba(245,158,11,0.15)' },
-  danger:  { bg: 'from-red-900/50 to-bg-card',     border: 'border-red-700/30',     text: 'text-red-400',     badge: 'bg-red-400/15',     glow: 'rgba(239,68,68,0.15)'  },
-  violet:  { bg: 'from-purple-900/50 to-bg-card',  border: 'border-purple-700/30',  text: 'text-purple-400',  badge: 'bg-purple-400/15',  glow: 'rgba(139,92,246,0.15)' },
-  orange:  { bg: 'from-orange-900/50 to-bg-card',  border: 'border-orange-700/30',  text: 'text-orange-400',  badge: 'bg-orange-400/15',  glow: 'rgba(249,115,22,0.15)' },
-  slate:   { bg: 'from-slate-800/50 to-bg-card',   border: 'border-border-default', text: 'text-ink-primary', badge: 'bg-white/10',        glow: 'rgba(255,255,255,0.05)'},
+  blue:    { leftBorder: 'border-l-[#FF6600]', text: 'text-[#FF6600]',    badge: 'bg-[#FF6600]/10'    },
+  emerald: { leftBorder: 'border-l-[#10B981]', text: 'text-[#10B981]',    badge: 'bg-[#10B981]/10'    },
+  teal:    { leftBorder: 'border-l-[#0891B2]', text: 'text-[#0891B2]',    badge: 'bg-[#0891B2]/10'    },
+  amber:   { leftBorder: 'border-l-[#D97706]', text: 'text-[#D97706]',    badge: 'bg-[#D97706]/10'    },
+  danger:  { leftBorder: 'border-l-[#E63946]', text: 'text-[#E63946]',    badge: 'bg-[#E63946]/10'    },
+  violet:  { leftBorder: 'border-l-[#7C3AED]', text: 'text-[#7C3AED]',    badge: 'bg-[#7C3AED]/10'    },
+  orange:  { leftBorder: 'border-l-[#FF6600]', text: 'text-[#FF6600]',    badge: 'bg-[#FF6600]/10'    },
+  slate:   { leftBorder: 'border-l-[#64748B]', text: 'text-[#64748B]',    badge: 'bg-[#64748B]/10'    },
 }
 
 export function KPICard({
@@ -46,18 +44,13 @@ export function KPICard({
 
   return (
     <div
-      className={`relative bg-gradient-to-br ${s.bg} border ${s.border} rounded-xl p-4 flex flex-col gap-3 min-w-0 overflow-hidden hover:brightness-105 transition-all duration-200 animate-fade-up cursor-default ${className}`}
+      className={`relative bg-white border border-[#E2E8F0] border-l-4 ${s.leftBorder} rounded-xl p-4 flex flex-col gap-3 min-w-0 overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 animate-fade-up cursor-default ${className}`}
       style={{ animationDelay: animDelay, opacity: 0 }}
     >
-      {/* Glow decorativo */}
-      <div
-        className="absolute -top-6 -right-6 w-24 h-24 rounded-full blur-2xl opacity-25 pointer-events-none"
-        style={{ background: s.glow }}
-      />
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-2 relative z-10">
-        <p className="text-[10.5px] text-ink-muted uppercase tracking-wider font-medium leading-tight">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[10.5px] text-[#64748B] uppercase tracking-wider font-medium leading-tight">
           {label}
         </p>
         <span className={`p-1.5 rounded-lg ${s.badge} ${s.text} flex-shrink-0`}>
@@ -67,16 +60,16 @@ export function KPICard({
 
       {/* Valor principal */}
       <p
-        className={`font-bold leading-none ${s.text} relative z-10`}
+        className={`font-bold leading-none text-[#1A1A1A]`}
         style={{ fontSize }}
       >
         {value}
       </p>
 
       {/* Rodapé: sublabel + trend */}
-      <div className="flex items-center justify-between gap-2 mt-auto relative z-10">
+      <div className="flex items-center justify-between gap-2 mt-auto">
         {sublabel && (
-          <span className="text-[10.5px] text-ink-muted truncate">{sublabel}</span>
+          <span className="text-[10.5px] text-[#94A3B8] truncate">{sublabel}</span>
         )}
         {trend && <MomBadge value={trend.value} positive={trend.positive} />}
       </div>
@@ -87,13 +80,13 @@ export function KPICard({
 function MomBadge({ value, positive }: { value: string | null; positive: boolean }) {
   if (value === null) {
     return (
-      <span className="flex items-center gap-1 text-[11px] text-ink-muted">
+      <span className="flex items-center gap-1 text-[11px] text-[#94A3B8]">
         <Minus className="w-3 h-3" /> —
       </span>
     )
   }
   const Icon = positive ? TrendingUp : TrendingDown
-  const color = positive ? 'text-emerald-400' : 'text-red-400'
+  const color = positive ? 'text-[#10B981]' : 'text-[#E63946]'
   return (
     <span className={`flex items-center gap-1 text-[11px] font-semibold ${color}`}>
       <Icon className="w-3 h-3" />

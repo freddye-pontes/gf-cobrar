@@ -104,14 +104,14 @@ export function CreditoresClient({ credores, repasses }: Props) {
           {/* Summary cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
             {[
-              { label: 'Total em Carteira',     value: formatCurrencyCompact(totalCarteira),  Icon: DollarSign,   color: '#3b82f6', glow: 'rgba(59,130,246,0.5)',  bg: 'rgba(59,130,246,0.08)'  },
-              { label: 'Total Recuperado',       value: formatCurrencyCompact(totalRecuperado),Icon: CheckCircle2, color: '#34d399', glow: 'rgba(52,211,153,0.5)',  bg: 'rgba(16,185,129,0.08)' },
-              { label: 'Taxa Média Recuperação', value: `${taxaMedia}%`,                       Icon: Percent,      color: '#fbbf24', glow: 'rgba(251,191,36,0.5)',  bg: 'rgba(245,158,11,0.08)' },
+              { label: 'Total em Carteira',     value: formatCurrencyCompact(totalCarteira),  Icon: DollarSign,   color: '#FF6600', glow: 'rgba(255,102,0,0.3)',   bg: 'rgba(255,102,0,0.08)'   },
+              { label: 'Total Recuperado',       value: formatCurrencyCompact(totalRecuperado),Icon: CheckCircle2, color: '#10B981', glow: 'rgba(16,185,129,0.3)', bg: 'rgba(16,185,129,0.08)' },
+              { label: 'Taxa Média Recuperação', value: `${taxaMedia}%`,                       Icon: Percent,      color: '#D97706', glow: 'rgba(217,119,6,0.3)',   bg: 'rgba(217,119,6,0.08)'  },
             ].map((s) => (
               <div key={s.label}
                 className="relative overflow-hidden rounded-xl p-4 border transition-all duration-200 hover:brightness-110 cursor-default"
                 style={{
-                  background: `linear-gradient(135deg, ${s.bg} 0%, #1a1a1a 100%)`,
+                  background: s.bg,
                   borderColor: s.bg.replace('0.08', '0.25'),
                 }}
               >

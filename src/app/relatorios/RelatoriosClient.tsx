@@ -35,7 +35,7 @@ interface Props { credores: APICredorOut[] }
 
 const statusColors: Record<string, string> = {
   pendente: 'text-amber bg-amber/10 border-amber/20',
-  aprovado: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  aprovado: 'text-[#FF6600] bg-[#FF6600]/10 border-[#FF6600]/20',
   executado: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
 }
 

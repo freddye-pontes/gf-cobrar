@@ -160,7 +160,7 @@ export function EditarReguaModal({ open, onClose, etapas, credorNome, onSave }: 
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={etapa.automatico}
                     onChange={(e) => update(idx, 'automatico', e.target.checked)}
-                    className="w-4 h-4 accent-[#3b82f6]" />
+                    className="w-4 h-4 accent-[#FF6600]" />
                   <span className="text-xs text-ink-secondary whitespace-nowrap">Automático</span>
                 </label>
               </div>

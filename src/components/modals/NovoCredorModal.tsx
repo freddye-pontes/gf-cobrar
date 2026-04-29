@@ -199,7 +199,7 @@ export function NovoCredorModal({ open, onClose, onSuccess, credor }: Props) {
         {isEdit && (
           <div className="flex items-center gap-3">
             <input type="checkbox" id="ativo-check" checked={ativo} onChange={(e) => setAtivo(e.target.checked)}
-              className="w-4 h-4 accent-[#3b82f6]" />
+              className="w-4 h-4 accent-[#FF6600]" />
             <label htmlFor="ativo-check" className="text-sm text-ink-secondary cursor-pointer">Credor ativo</label>
           </div>
         )}
