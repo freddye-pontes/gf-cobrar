@@ -200,12 +200,6 @@ export function CreditoresClient({ credores, repasses }: Props) {
                           {formatCurrencyCompact(credor.total_recuperado)}
                         </p>
                       </div>
-                      <div>
-                        <p className="text-ink-muted text-[10px] font-mono uppercase">Comissão</p>
-                        <p className="font-mono text-amber text-sm font-bold mt-0.5">
-                          {credor.comissao_percentual}%
-                        </p>
-                      </div>
                     </div>
 
                     <button
