@@ -15,6 +15,8 @@ import type { StatusDivida, CanalContato } from '@/lib/types'
 import { DevedorQuickActions } from './DevedorActions'
 import { PainelNegociacao } from '@/components/negociacao/PainelNegociacao'
 import { PainelPagamento } from '@/components/negociacao/PainelPagamento'
+import { PainelInteligencia } from '@/components/negociacao/PainelInteligencia'
+import { BarraOperador } from '@/components/negociacao/BarraOperador'
 
 const canalIcon: Record<CanalContato, React.ReactNode> = {
   whatsapp: <MessageSquare className="w-3.5 h-3.5 text-emerald" />,
@@ -107,9 +109,42 @@ export default async function DevedorDetailPage({
 
   const { endereco } = devedor
 
+  function getStatusGranular(d: (typeof dividas)[0]) {
+    if (d.status === 'pago') return { label: 'Pago', cls: 'bg-emerald-dim text-emerald border-emerald/20' }
+    if (d.status === 'encerrado') return { label: 'Encerrado', cls: 'bg-elevated text-ink-muted border-border-default' }
+    if (d.status === 'ptp_ativa') {
+      const hoje = new Date().toDateString()
+      if (d.data_promessa_pagamento) {
+        const p = new Date(d.data_promessa_pagamento)
+        if (p < new Date()) return { label: 'PTP VENCIDA', cls: 'bg-danger-dim text-danger border-danger/20' }
+        if (p.toDateString() === hoje) return { label: 'PTP vence HOJE', cls: 'bg-danger-dim text-danger border-danger/20' }
+      }
+      return { label: 'PTP Ativa', cls: 'bg-violet-dim text-violet border-violet/20' }
+    }
+    if (d.status === 'em_negociacao') return { label: 'Negociando', cls: 'bg-amber-dim text-amber border-amber/20' }
+    if (d.status === 'em_aberto' && d.dias_sem_contato >= 7) return { label: 'Sem Contato', cls: 'bg-danger-dim text-danger border-danger/20' }
+    return { label: 'Em Aberto', cls: 'bg-accent-dim text-accent border-accent/20' }
+  }
+
+  function getPrioridade(diasAtraso: number) {
+    if (diasAtraso > 120) return { label: 'Alta', icon: '🔥', cls: 'text-danger' }
+    if (diasAtraso > 60) return { label: 'Média', icon: '⚠️', cls: 'text-amber' }
+    return { label: 'Normal', icon: '', cls: 'text-ink-muted' }
+  }
+
+  function getHistoricoResumo(historico: (typeof dividas)[0]['historico']) {
+    if (!historico.length) return null
+    const tentativas = historico.length
+    const ultimo = [...historico].reverse()[0]
+    const respondeu = ultimo && !['sem', 'não', 'nao', 'sem resposta'].some(k => ultimo.resultado.toLowerCase().startsWith(k))
+    const canalCount = historico.reduce<Record<string, number>>((acc, h) => { acc[h.canal] = (acc[h.canal] ?? 0) + 1; return acc }, {})
+    const canalEficaz = Object.entries(canalCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
+    return { tentativas, respondeu, canalEficaz }
+  }
+
   return (
     <AppLayout>
-      <div className="min-h-full bg-void">
+      <div className="min-h-full bg-void pb-14">
         {/* Header */}
         <div className="sticky top-0 z-10 bg-void/95 backdrop-blur border-b border-border-subtle px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
@@ -228,6 +263,9 @@ export default async function DevedorDetailPage({
                 credorNome: d.credor_nome ?? '',
               }))}
             />
+
+            {/* Inteligência do devedor */}
+            <PainelInteligencia devedor={devedor} />
           </div>
 
           {/* Col 2: Debts + Negotiation */}
@@ -245,9 +283,32 @@ export default async function DevedorDetailPage({
                 <div className="divide-y divide-border-subtle">
                   {dividas.map((divida) => {
                     const negociacao = negociacoes.find((n) => n.divida_id === divida.id && n.status === 'ativa')
+                    const statusG = getStatusGranular(divida)
+                    const prioridade = getPrioridade(divida.dias_atraso)
+                    const resumoHistorico = getHistoricoResumo(divida.historico)
 
                     return (
                       <div key={divida.id} className="p-5">
+                        {/* 4.1 — Status header granular */}
+                        {divida.status !== 'pago' && divida.status !== 'encerrado' && (
+                          <div className="flex flex-wrap items-center gap-2 mb-3 px-3 py-2 bg-elevated rounded-lg border border-border-subtle text-[11px]">
+                            <span className="text-ink-muted font-mono uppercase tracking-wider">Status:</span>
+                            <span className={`font-semibold border rounded px-2 py-0.5 ${statusG.cls}`}>
+                              {statusG.label}
+                            </span>
+                            <span className="text-ink-muted font-mono uppercase tracking-wider ml-2">Prioridade:</span>
+                            <span className={`font-semibold ${prioridade.cls}`}>
+                              {prioridade.icon} {prioridade.label}
+                            </span>
+                            {divida.dias_atraso > 0 && (
+                              <>
+                                <span className="text-ink-muted font-mono uppercase tracking-wider ml-2 hidden sm:inline">Atraso:</span>
+                                <span className="font-mono font-bold text-ink-secondary hidden sm:inline">📅 {divida.dias_atraso} dias</span>
+                              </>
+                            )}
+                          </div>
+                        )}
+
                         {/* Chave imutável da dívida */}
                         <div className="flex items-center gap-1.5 mb-3 pb-3 border-b border-border-subtle">
                           <Hash className="w-3 h-3 text-ink-muted" />
@@ -323,34 +384,68 @@ export default async function DevedorDetailPage({
                           credorNome={divida.credor_nome ?? `Credor #${divida.credor_id}`}
                         />
 
-                        {/* History — append-only / immutable */}
-                        <div className="mt-3">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <Lock className="w-3 h-3 text-ink-muted" />
-                            <p className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">
-                              Histórico imutável ({divida.historico.length})
-                            </p>
+                        {/* 4.4 — Histórico visual melhorado */}
+                        <div className="mt-4 pt-4 border-t border-border-subtle">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5">
+                              <Lock className="w-3 h-3 text-ink-muted" />
+                              <p className="text-ink-muted text-[10px] font-mono uppercase tracking-wider">
+                                Histórico de contatos ({divida.historico.length})
+                              </p>
+                            </div>
                           </div>
+
+                          {/* Resumo */}
+                          {resumoHistorico && (
+                            <div className="flex flex-wrap gap-3 mb-3 text-[10px] font-mono bg-elevated rounded-lg px-3 py-2 border border-border-subtle">
+                              <span className="text-ink-muted">Tentativas: <strong className="text-ink-primary">{resumoHistorico.tentativas}</strong></span>
+                              <span className="text-ink-muted">Último: <strong className={resumoHistorico.respondeu ? 'text-emerald' : 'text-amber'}>{resumoHistorico.respondeu ? '✓ Respondeu' : '✗ Sem resposta'}</strong></span>
+                              {resumoHistorico.canalEficaz && (
+                                <span className="text-ink-muted">Canal principal: <strong className="text-ink-primary capitalize">{resumoHistorico.canalEficaz}</strong></span>
+                              )}
+                            </div>
+                          )}
+
                           {divida.historico.length === 0 ? (
                             <p className="text-ink-disabled text-xs">Sem registros de contato.</p>
                           ) : (
                             <div className="space-y-1.5">
-                              {[...divida.historico].reverse().map((h) => (
-                                <div key={h.id} className="flex items-start gap-2.5">
-                                  <div className="shrink-0 mt-0.5">
-                                    {canalIcon[h.canal as CanalContato] ?? canalIcon.sistema}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-ink-secondary text-xs">{h.resultado}</p>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-ink-disabled text-[10px] font-mono">{formatDate(h.data)}</span>
-                                      {h.operador_nome && (
-                                        <span className="text-ink-disabled text-[10px]">· {h.operador_nome}</span>
-                                      )}
+                              {[...divida.historico].reverse().map((h) => {
+                                const lc = h.resultado.toLowerCase()
+                                const respondeu = !['sem', 'não', 'nao'].some(k => lc.startsWith(k))
+                                const isAuto = h.canal === 'sistema'
+                                const rowCls = isAuto
+                                  ? 'bg-elevated/50 border-border-subtle'
+                                  : respondeu
+                                  ? 'bg-emerald-dim border-emerald/15'
+                                  : 'bg-amber-dim border-amber/15'
+                                const tagCls = isAuto
+                                  ? 'text-ink-muted bg-elevated border-border-default'
+                                  : respondeu
+                                  ? 'text-emerald bg-emerald-dim border-emerald/20'
+                                  : 'text-amber bg-amber-dim border-amber/20'
+                                const tagLabel = isAuto ? 'Automático' : respondeu ? 'Respondido' : 'Não respondido'
+
+                                return (
+                                  <div key={h.id} className={`flex items-start gap-2.5 rounded-lg px-2.5 py-2 border ${rowCls}`}>
+                                    <div className="shrink-0 mt-0.5">
+                                      {canalIcon[h.canal as CanalContato] ?? canalIcon.sistema}
                                     </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-ink-secondary text-xs">{h.resultado}</p>
+                                      <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="text-ink-disabled text-[10px] font-mono">{formatDate(h.data)}</span>
+                                        {h.operador_nome && (
+                                          <span className="text-ink-disabled text-[10px]">· {h.operador_nome}</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <span className={`shrink-0 text-[9px] font-mono font-bold uppercase border rounded px-1.5 py-0.5 ${tagCls}`}>
+                                      {tagLabel}
+                                    </span>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                             </div>
                           )}
                         </div>
@@ -372,6 +467,9 @@ export default async function DevedorDetailPage({
           </div>
         </div>
       </div>
+
+      {/* 4.5 — Barra de operador fixa */}
+      <BarraOperador />
     </AppLayout>
   )
 }

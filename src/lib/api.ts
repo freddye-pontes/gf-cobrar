@@ -116,6 +116,7 @@ export interface APIDividaListOut {
   desconto_aplicado: number | null
   comissao_percentual: number | null
   data_vencimento: string
+  data_promessa_pagamento: string | null
   data_pagamento_confirmado: string | null
   tipo: string
   status: string
@@ -312,6 +313,14 @@ export const devedoresApi = {
   update: (id: number, body: unknown) => put<APIDevedor>(`/devedores/${id}`, body),
   patchStatusCadastro: (id: number) =>
     patch<APIDevedor>(`/devedores/${id}/status-cadastro`),
+  updateInteligencia: (id: number, body: {
+    score_recuperabilidade?: number | null
+    chance_recuperacao?: string | null
+    perfil_financeiro?: string | null
+    renda_estimada_min?: number | null
+    renda_estimada_max?: number | null
+    historico_pagamento?: string | null
+  }) => put<APIDevedor>(`/devedores/${id}/inteligencia`, body),
   delete: (id: number) => del(`/devedores/${id}`),
 }
 
