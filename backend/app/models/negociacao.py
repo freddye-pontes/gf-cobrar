@@ -7,6 +7,7 @@ from app.models.base import Base
 
 if TYPE_CHECKING:
     from app.models.divida import Divida
+    from app.models.cobranca import Cobranca
 
 
 class Negociacao(Base):
@@ -19,13 +20,17 @@ class Negociacao(Base):
     tipo: Mapped[str] = mapped_column(String(20))
     # ativa | concluida | quebrada
     status: Mapped[str] = mapped_column(String(20), default="ativa", index=True)
+    # Status granular: ativa | em_contato | aguardando_pagamento | ptp_ativa | pago | quebrada | cancelada
+    status_detalhe: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
 
     valor_original: Mapped[float] = mapped_column(Numeric(15, 2))
     valor_oferta: Mapped[float] = mapped_column(Numeric(15, 2))
     desconto_percentual: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))
     numero_parcelas: Mapped[Optional[int]] = mapped_column(Integer)
     valor_parcela: Mapped[Optional[float]] = mapped_column(Numeric(15, 2))
+    valor_entrada: Mapped[Optional[float]] = mapped_column(Numeric(15, 2), nullable=True)
     data_promessa: Mapped[Optional[date]] = mapped_column(Date)
+    data_promessa_ptp: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     data_conclusao: Mapped[Optional[date]] = mapped_column(Date)
 
     comissao_percentual: Mapped[Optional[float]] = mapped_column(Numeric(5, 2), nullable=True)
@@ -37,5 +42,8 @@ class Negociacao(Base):
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
-    # Relationship
+    # Relationships
     divida: Mapped["Divida"] = relationship(back_populates="negociacao")
+    cobrancas: Mapped[list["Cobranca"]] = relationship(
+        back_populates="negociacao", cascade="all, delete-orphan"
+    )

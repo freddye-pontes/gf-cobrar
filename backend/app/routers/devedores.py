@@ -1,9 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from typing import Optional
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models import Devedor
 from app.schemas.devedor import DevedorCreate, DevedorUpdate, DevedorOut, EnderecoSchema
+
+
+class IntelligenciaUpdate(BaseModel):
+    score_recuperabilidade: Optional[int] = None
+    chance_recuperacao: Optional[str] = None
+    perfil_financeiro: Optional[str] = None
+    renda_estimada_min: Optional[float] = None
+    renda_estimada_max: Optional[float] = None
+    historico_pagamento: Optional[str] = None
 
 router = APIRouter(prefix="/devedores", tags=["devedores"])
 
@@ -99,6 +110,22 @@ def deletar_devedor(devedor_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Devedor não encontrado")
     db.delete(d)
     db.commit()
+
+
+@router.put("/{devedor_id}/inteligencia", response_model=DevedorOut)
+def atualizar_inteligencia(
+    devedor_id: int,
+    payload: IntelligenciaUpdate,
+    db: Session = Depends(get_db),
+):
+    d = db.query(Devedor).filter(Devedor.id == devedor_id).first()
+    if not d:
+        raise HTTPException(status_code=404, detail="Devedor não encontrado")
+    for field, value in payload.model_dump(exclude_none=True).items():
+        setattr(d, field, value)
+    db.commit()
+    db.refresh(d)
+    return _to_out(d)
 
 
 @router.put("/{devedor_id}", response_model=DevedorOut)

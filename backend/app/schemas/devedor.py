@@ -51,6 +51,13 @@ class DevedorOut(BaseModel):
     score_spc: Optional[int]
     perfil: str
     cadastro_status: str = "COMPLETO"
+    # Inteligência
+    score_recuperabilidade: Optional[int] = None
+    chance_recuperacao: Optional[str] = None
+    perfil_financeiro: Optional[str] = None
+    renda_estimada_min: Optional[float] = None
+    renda_estimada_max: Optional[float] = None
+    historico_pagamento: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
@@ -78,6 +85,12 @@ class DevedorOut(BaseModel):
             score_spc=m.score_spc,
             perfil=m.perfil,
             cadastro_status=m.cadastro_status,
+            score_recuperabilidade=getattr(m, "score_recuperabilidade", None),
+            chance_recuperacao=getattr(m, "chance_recuperacao", None),
+            perfil_financeiro=getattr(m, "perfil_financeiro", None),
+            renda_estimada_min=float(m.renda_estimada_min) if getattr(m, "renda_estimada_min", None) else None,
+            renda_estimada_max=float(m.renda_estimada_max) if getattr(m, "renda_estimada_max", None) else None,
+            historico_pagamento=getattr(m, "historico_pagamento", None),
             created_at=m.created_at,
             updated_at=m.updated_at,
         )

@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, DateTime, func
+from sqlalchemy import String, Integer, Numeric, DateTime, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
@@ -33,6 +33,17 @@ class Devedor(Base):
 
     score_spc: Mapped[Optional[int]] = mapped_column(Integer)
     perfil: Mapped[str] = mapped_column(String(20), default="varejo")  # B2B | varejo | recorrente
+
+    # Inteligência de recuperação
+    score_recuperabilidade: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    # alta | media | baixa
+    chance_recuperacao: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    # assalariado_clt | autonomo | empresario | aposentado | desempregado
+    perfil_financeiro: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    renda_estimada_min: Mapped[Optional[float]] = mapped_column(Numeric(15, 2), nullable=True)
+    renda_estimada_max: Mapped[Optional[float]] = mapped_column(Numeric(15, 2), nullable=True)
+    # bom | regular | ruim
+    historico_pagamento: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(

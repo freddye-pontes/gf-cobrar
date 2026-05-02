@@ -3,6 +3,7 @@ from app.models.credor import Credor
 from app.models.devedor import Devedor
 from app.models.divida import Divida, HistoricoContato
 from app.models.negociacao import Negociacao
+from app.models.cobranca import Cobranca
 from app.models.repasse import Repasse
 from app.models.regua import ReguaEtapa
 
@@ -13,6 +14,7 @@ __all__ = [
     "Divida",
     "HistoricoContato",
     "Negociacao",
+    "Cobranca",
     "Repasse",
     "ReguaEtapa",
 ]

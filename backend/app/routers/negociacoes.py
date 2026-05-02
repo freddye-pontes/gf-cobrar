@@ -135,3 +135,52 @@ def deletar_negociacao(neg_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Negociação não encontrada")
     db.delete(n)
     db.commit()
+
+
+@router.get("/simular/{divida_id}")
+def simular_acordo(divida_id: int, db: Session = Depends(get_db)):
+    """
+    Retorna ofertas automáticas baseadas nas regras do credor.
+    Usado pela tela de negociação para sugerir valores sem calcular no frontend.
+    """
+    divida = (
+        db.query(Divida)
+        .options(joinedload(Divida.credor))
+        .filter(Divida.id == divida_id)
+        .first()
+    )
+    if not divida:
+        raise HTTPException(status_code=404, detail="Dívida não encontrada")
+
+    credor = divida.credor
+    valor_base = float(divida.valor_atualizado)
+    limite_desconto_pct = float(credor.limite_desconto) if credor else 0.0
+    limite_desconto = limite_desconto_pct / 100
+    max_parcelas = 6
+    entrada_minima_pct = 20.0
+
+    desconto_maximo = valor_base * limite_desconto
+    valor_a_vista = round(valor_base - desconto_maximo, 2)
+    valor_parcela = round(valor_base / max_parcelas, 2)
+    entrada_minima = round(valor_base * (entrada_minima_pct / 100), 2)
+
+    dias_atraso = (date.today() - divida.data_vencimento).days if divida.data_vencimento else 0
+
+    return {
+        "valor_original": valor_base,
+        "limite_desconto_pct": limite_desconto_pct,
+        "max_parcelas": max_parcelas,
+        "entrada_minima_pct": entrada_minima_pct,
+        "oferta_a_vista": {
+            "valor": valor_a_vista,
+            "desconto_reais": round(desconto_maximo, 2),
+            "desconto_pct": limite_desconto_pct,
+        },
+        "oferta_parcelado": {
+            "parcelas": max_parcelas,
+            "valor_parcela": valor_parcela,
+            "total": round(valor_parcela * max_parcelas, 2),
+        },
+        "entrada_minima": entrada_minima,
+        "dias_atraso": max(dias_atraso, 0),
+    }
