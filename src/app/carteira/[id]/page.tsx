@@ -14,6 +14,7 @@ import {
 import type { StatusDivida, CanalContato } from '@/lib/types'
 import { DevedorQuickActions } from './DevedorActions'
 import { PainelNegociacao } from '@/components/negociacao/PainelNegociacao'
+import { PainelPagamento } from '@/components/negociacao/PainelPagamento'
 
 const canalIcon: Record<CanalContato, React.ReactNode> = {
   whatsapp: <MessageSquare className="w-3.5 h-3.5 text-emerald" />,
@@ -86,6 +87,16 @@ export default async function DevedorDetailPage({
     .filter((d) => d.status !== 'pago' && d.status !== 'encerrado')
     .reduce((s, d) => s + d.valor_atualizado, 0)
 
+  // Dívida primária para o painel direito: primeira com cobrança ativa, ou primeira não-paga
+  const primaryDivida =
+    dividas.find(d => cobrancaMap[d.id]) ??
+    dividas.find(d => !['pago', 'encerrado'].includes(d.status)) ??
+    dividas[0] ?? null
+  const primaryNegociacao = primaryDivida
+    ? negociacoes.find(n => n.divida_id === primaryDivida.id && n.status === 'ativa') ?? null
+    : null
+  const primaryCobranca = primaryDivida ? cobrancaMap[primaryDivida.id] ?? null : null
+
   const scoreColor = !devedor.score_spc
     ? '#7a9bc8'
     : devedor.score_spc >= 400
@@ -114,8 +125,8 @@ export default async function DevedorDetailPage({
           </div>
         </div>
 
-        <div className="p-4 md:p-6 grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-5">
-          {/* Left: Debtor profile */}
+        <div className="p-4 md:p-6 grid grid-cols-1 xl:grid-cols-[280px_1fr_300px] gap-4 md:gap-5">
+          {/* Col 1: Debtor profile */}
           <div className="space-y-4">
             {/* Identity card */}
             <div className="bg-surface border border-border-subtle rounded-xl p-5 animate-fade-up" style={{ animationDelay: '0ms', opacity: 0 }}>
@@ -219,8 +230,8 @@ export default async function DevedorDetailPage({
             />
           </div>
 
-          {/* Right: Debts + History */}
-          <div className="xl:col-span-2 space-y-5">
+          {/* Col 2: Debts + Negotiation */}
+          <div className="space-y-5">
             <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden animate-fade-up" style={{ animationDelay: '100ms', opacity: 0 }}>
               <div className="px-5 py-4 border-b border-border-subtle">
                 <h3 className="font-display font-semibold text-ink-primary text-sm">Dívidas</h3>
@@ -349,6 +360,15 @@ export default async function DevedorDetailPage({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Col 3: Payment situation (sticky on desktop) */}
+          <div className="xl:sticky xl:top-[73px] xl:self-start space-y-4">
+            <PainelPagamento
+              cobranca={primaryCobranca}
+              negociacao={primaryNegociacao}
+              divida={primaryDivida}
+            />
           </div>
         </div>
       </div>
