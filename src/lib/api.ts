@@ -167,6 +167,49 @@ export interface APIDevedor {
     estado: string | null
     cep: string | null
   }
+  // Inteligência
+  score_recuperabilidade: number | null
+  chance_recuperacao: string | null
+  perfil_financeiro: string | null
+  renda_estimada_min: number | null
+  renda_estimada_max: number | null
+  historico_pagamento: string | null
+}
+
+export interface APICobranca {
+  id: number
+  negociacao_id: number
+  divida_id: number
+  forma_pagamento: 'pix' | 'boleto' | 'link_parcelado'
+  valor: number
+  data_vencimento: string
+  status: 'pendente' | 'aguardando_pagamento' | 'pago' | 'cancelado' | 'expirado'
+  pix_qr_code: string | null
+  pix_copia_cola: string | null
+  boleto_url: string | null
+  boleto_codigo: string | null
+  link_pagamento: string | null
+  numero_parcelas: number | null
+  data_pagamento_confirmado: string | null
+  forma_confirmacao: string | null
+  comprovante_url: string | null
+  enviado_whatsapp: boolean
+  enviado_email: boolean
+  canal_envio: string | null
+  data_envio: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface APISimulacaoAcordo {
+  valor_original: number
+  limite_desconto_pct: number
+  max_parcelas: number
+  entrada_minima_pct: number
+  oferta_a_vista: { valor: number; desconto_reais: number; desconto_pct: number }
+  oferta_parcelado: { parcelas: number; valor_parcela: number; total: number }
+  entrada_minima: number
+  dias_atraso: number
 }
 
 export interface APICredorOut {
@@ -293,6 +336,18 @@ export const negociacoesApi = {
   create: (body: unknown) => post<APINegociacaoOut>('/negociacoes/', body),
   update: (id: number, body: unknown) => put<APINegociacaoOut>(`/negociacoes/${id}`, body),
   delete: (id: number) => del(`/negociacoes/${id}`),
+  simular: (dividaId: number) => get<APISimulacaoAcordo>(`/negociacoes/simular/${dividaId}`),
+}
+
+// ── Cobranças ─────────────────────────────────────────────────────────────────
+
+export const cobrancasApi = {
+  create: (body: unknown) => post<APICobranca>('/cobrancas/', body),
+  get: (id: number) => get<APICobranca>(`/cobrancas/${id}`),
+  byNegociacao: (negId: number) => get<APICobranca[]>(`/cobrancas/negociacao/${negId}`),
+  confirmar: (id: number, body: unknown) => put<APICobranca>(`/cobrancas/${id}/confirmar`, body),
+  cancelar: (id: number) => put<APICobranca>(`/cobrancas/${id}/cancelar`, {}),
+  reenviar: (id: number) => post<void>(`/cobrancas/${id}/reenviar`, {}),
 }
 
 // ── Repasses ──────────────────────────────────────────────────────────────────

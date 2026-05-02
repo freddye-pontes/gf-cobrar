@@ -2,10 +2,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { devedoresApi, dividasApi, negociacoesApi } from '@/lib/api'
+import { devedoresApi, dividasApi, negociacoesApi, cobrancasApi, type APICobranca, type APISimulacaoAcordo } from '@/lib/api'
 import {
-  formatCurrency, formatDate, getTipoLabel,
-  getTipoNegociacaoLabel, maskCpfCnpj,
+  formatCurrency, formatDate, getTipoLabel, maskCpfCnpj,
 } from '@/lib/utils'
 import {
   ArrowLeft, Phone, Mail, MapPin, MessageSquare,
@@ -13,7 +12,8 @@ import {
   Building2, User, CalendarCheck, Gavel, Lock, Hash,
 } from 'lucide-react'
 import type { StatusDivida, CanalContato } from '@/lib/types'
-import { DevedorQuickActions, DividaActionButtons } from './DevedorActions'
+import { DevedorQuickActions } from './DevedorActions'
+import { PainelNegociacao } from '@/components/negociacao/PainelNegociacao'
 
 const canalIcon: Record<CanalContato, React.ReactNode> = {
   whatsapp: <MessageSquare className="w-3.5 h-3.5 text-emerald" />,
@@ -59,6 +59,28 @@ export default async function DevedorDetailPage({
 
   const dividaIds = new Set(dividasList.map((d) => d.id))
   const negociacoes = allNegociacoes.filter((n) => dividaIds.has(n.divida_id))
+
+  // Fetch simulações para dívidas ativas
+  const simulacaoMap: Record<number, APISimulacaoAcordo | null> = {}
+  await Promise.all(
+    dividas
+      .filter(d => !['pago', 'encerrado'].includes(d.status))
+      .map(async d => {
+        simulacaoMap[d.id] = await negociacoesApi.simular(d.id).catch(() => null)
+      })
+  )
+
+  // Fetch cobranças para negociações ativas
+  const cobrancaMap: Record<number, APICobranca | null> = {}
+  await Promise.all(
+    negociacoes
+      .filter(n => n.status === 'ativa')
+      .map(async n => {
+        const cobrs = await cobrancasApi.byNegociacao(n.id).catch(() => [] as APICobranca[])
+        const ativa = cobrs.find(c => !['cancelado', 'expirado'].includes(c.status))
+        cobrancaMap[n.divida_id] = ativa ?? null
+      })
+  )
 
   const totalEmAberto = dividas
     .filter((d) => d.status !== 'pago' && d.status !== 'encerrado')
@@ -281,43 +303,13 @@ export default async function DevedorDetailPage({
                           </div>
                         )}
 
-                        {/* Active negotiation */}
-                        {negociacao && (
-                          <div className="bg-amber-dim border border-amber/20 rounded-lg p-3 mb-3">
-                            <div className="flex items-center justify-between">
-                              <p className="text-amber text-xs font-semibold">
-                                Negociação Ativa — {getTipoNegociacaoLabel(negociacao.tipo as any)}
-                              </p>
-                              <span className="font-mono text-xs text-amber-light font-bold">
-                                {formatCurrency(negociacao.valor_oferta)}
-                              </span>
-                            </div>
-                            {negociacao.numero_parcelas && (
-                              <p className="text-amber/70 text-xs mt-1">
-                                {negociacao.numero_parcelas}x de {formatCurrency(negociacao.valor_parcela ?? 0)}
-                              </p>
-                            )}
-                            {negociacao.data_promessa && (
-                              <p className="text-amber/70 text-xs mt-1">
-                                Promessa para: {formatDate(negociacao.data_promessa)}
-                              </p>
-                            )}
-                            {negociacao.notas && (
-                              <p className="text-amber/60 text-xs mt-1.5 line-clamp-2">{negociacao.notas}</p>
-                            )}
-                            <p className="text-amber/50 text-[10px] mt-1">Resp: {negociacao.responsavel_nome}</p>
-                          </div>
-                        )}
-
-                        {/* Per-divida actions — client component */}
-                        <DividaActionButtons
-                          divida={{
-                            id: divida.id,
-                            status: divida.status,
-                            credorNome: divida.credor_nome ?? '',
-                            negociacaoId: negociacao?.id,
-                            negociacaoValor: negociacao?.valor_oferta,
-                          }}
+                        {/* Motor de negociação */}
+                        <PainelNegociacao
+                          divida={divida}
+                          negociacao={negociacao ?? null}
+                          simulacao={simulacaoMap[divida.id] ?? null}
+                          cobrancaAtiva={cobrancaMap[divida.id] ?? null}
+                          credorNome={divida.credor_nome ?? `Credor #${divida.credor_id}`}
                         />
 
                         {/* History — append-only / immutable */}
