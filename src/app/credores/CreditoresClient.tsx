@@ -234,7 +234,7 @@ export function CreditoresClient({ credores, repasses }: Props) {
                           <div className="space-y-2">
                             {[
                               { label: 'Chave PIX', value: credor.pix_key ?? '—' },
-                              { label: 'Comissão', value: `${credor.comissao_percentual}% sobre recuperado` },
+                              { label: 'Comissão', value: 'Sobre recuperado' },
                               { label: 'Limite desconto', value: `Até ${credor.limite_desconto}%` },
                               { label: 'Contato', value: credor.contato_nome ?? '—' },
                             ].map((item) => (
@@ -282,7 +282,7 @@ export function CreditoresClient({ credores, repasses }: Props) {
                                           <p className="font-mono text-xs text-ink-secondary">{formatCurrency(rep.valor_bruto)}</p>
                                         </div>
                                         <div>
-                                          <p className="text-[10px] text-ink-muted">Comissão ({credor.comissao_percentual}%)</p>
+                                          <p className="text-[10px] text-ink-muted">Comissão</p>
                                           <p className="font-mono text-xs text-amber">-{formatCurrency(rep.comissao)}</p>
                                         </div>
                                         <div>
