@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   ShieldCheck, Layers, CalendarClock, AlertTriangle,
   Zap, AlignJustify, CreditCard, CheckCircle2, Loader2,
-  Send, FileText, ArrowRightLeft, Lock, MessageSquare, Calendar,
+  FileText, ArrowRightLeft, Lock, MessageSquare, Calendar,
 } from 'lucide-react'
 import {
   negociacoesApi, cobrancasApi,
@@ -219,155 +219,200 @@ export function PainelNegociacao({ divida, negociacao, simulacao, cobrancaAtiva,
             </div>
           )}
 
-          {/* SEÇÃO B — Modalidade */}
+          {/* SEÇÃO B — Modalidade com configurações inline */}
           <div>
             <p className="text-xs text-ink-muted font-mono mb-2">1. Escolha o acordo</p>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
+            <div className="space-y-2">
+
+              {/* ── CARD À VISTA ── */}
+              <div
                 onClick={() => onModalidadeChange('a_vista')}
-                className={`rounded-xl border p-3 text-left transition-all ${modalidade === 'a_vista'
-                  ? 'border-emerald bg-emerald-dim ring-1 ring-emerald/30'
+                className={`rounded-xl border transition-all cursor-pointer ${modalidade === 'a_vista'
+                  ? 'border-emerald ring-1 ring-emerald/30 bg-surface'
                   : 'border-border-default bg-surface hover:border-border-emphasis'}`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-ink-primary">À vista</span>
-                  {descontoFinalPct > 0 && (
-                    <span className="text-[10px] font-mono font-bold bg-emerald/10 text-emerald rounded px-1.5 py-0.5">
-                      {descontoFinalPct.toFixed(1)}% OFF
-                    </span>
-                  )}
+                {/* Header do card */}
+                <div className="flex items-center justify-between p-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      modalidade === 'a_vista' ? 'border-emerald' : 'border-border-emphasis'
+                    }`}>
+                      {modalidade === 'a_vista' && <div className="w-2 h-2 rounded-full bg-emerald" />}
+                    </div>
+                    <span className="text-sm font-semibold text-ink-primary">À vista com desconto</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono font-bold text-base text-emerald">{formatCurrency(valorAcordo)}</p>
+                    {descontoR > 0 && (
+                      <span className="text-[10px] font-mono font-bold text-emerald">
+                        {descontoFinalPct.toFixed(1)}% OFF
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="font-mono font-bold text-base text-emerald">{formatCurrency(valorAcordo)}</p>
-                <p className="text-[10px] text-ink-muted font-mono">Desconto: {formatCurrency(descontoR)}</p>
-              </button>
 
-              <button
-                onClick={() => onModalidadeChange('parcelado')}
-                className={`rounded-xl border p-3 text-left transition-all ${modalidade === 'parcelado'
-                  ? 'border-accent bg-accent-dim ring-1 ring-accent/30'
-                  : 'border-border-default bg-surface hover:border-border-emphasis'}`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-semibold text-ink-primary">Parcelado</span>
-                  <span className="text-[10px] font-mono font-bold bg-accent/10 text-accent rounded px-1.5 py-0.5">
-                    {numParcelas}x
-                  </span>
-                </div>
-                <p className="font-mono font-bold text-base text-accent">
-                  {numParcelas}x de {formatCurrency(valorParcela)}
-                </p>
-                <p className="text-[10px] text-ink-muted font-mono">Total: {formatCurrency(valorAcordo)}</p>
-              </button>
-            </div>
-
-            {/* Desconto bidirecional */}
-            <div className="bg-elevated border border-border-subtle rounded-xl p-3 space-y-2.5">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted">Desconto</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-[10px] text-ink-muted block mb-1">Em R$</label>
-                  <input
-                    type="number" step="0.01" min="0" max={valorBase}
-                    value={descontoValor}
-                    onChange={e => onDescontoValorChange(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full text-xs bg-surface border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-accent/60 transition-colors"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-ink-muted block mb-1">Em %</label>
-                  <input
-                    type="number" step="0.1" min="0" max="100"
-                    value={descontoPct}
-                    onChange={e => onDescontoPctChange(e.target.value)}
-                    placeholder="0.0"
-                    className={`w-full text-xs bg-surface border rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none transition-colors ${
-                      acimaDolimite ? 'border-danger focus:border-danger' : 'border-border-default focus:border-accent/60'
-                    }`}
-                  />
-                </div>
-              </div>
-              {acimaDolimite && (
-                <p className="flex items-center gap-1 text-danger text-[10px]">
-                  <AlertTriangle className="w-3 h-3" />
-                  Limite do credor: {limitePct}% — desconto atual acima do permitido
-                </p>
-              )}
-            </div>
-
-            {/* Seletor de parcelas (só no parcelado) */}
-            {modalidade === 'parcelado' && (
-              <div className="bg-elevated border border-border-subtle rounded-xl p-3 mt-2 space-y-2.5">
-                <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted">Número de parcelas</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {Array.from({ length: maxParcelas }, (_, i) => i + 1).map(n => (
-                    <button
-                      key={n}
-                      onClick={() => setNumParcelas(n)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                        numParcelas === n
-                          ? 'bg-accent text-white shadow-sm'
-                          : 'bg-surface border border-border-default text-ink-secondary hover:border-accent/50'
-                      }`}
-                    >
-                      {n}x
-                    </button>
-                  ))}
-                </div>
-                {numParcelas > 1 && (
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-ink-muted">Valor de cada parcela:</span>
-                    <span className="font-mono font-bold text-accent">{formatCurrency(valorParcela)}</span>
+                {/* Expandido quando selecionado */}
+                {modalidade === 'a_vista' && (
+                  <div className="px-3 pb-3 space-y-3 border-t border-emerald/15 pt-3" onClick={e => e.stopPropagation()}>
+                    {/* Desconto */}
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted mb-1.5">Desconto</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-ink-muted block mb-1">Em R$</label>
+                          <input type="number" step="0.01" min="0" max={valorBase}
+                            value={descontoValor} onChange={e => onDescontoValorChange(e.target.value)}
+                            placeholder="0,00"
+                            className="w-full text-xs bg-elevated border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-emerald/60 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-ink-muted block mb-1">Em %</label>
+                          <input type="number" step="0.1" min="0" max="100"
+                            value={descontoPct} onChange={e => onDescontoPctChange(e.target.value)}
+                            placeholder="0.0"
+                            className={`w-full text-xs bg-elevated border rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none transition-colors ${
+                              acimaDolimite ? 'border-danger' : 'border-border-default focus:border-emerald/60'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      {acimaDolimite && (
+                        <p className="flex items-center gap-1 text-danger text-[10px] mt-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          Limite do credor: {limitePct}% — desconto acima do permitido
+                        </p>
+                      )}
+                      {descontoR > 0 && !acimaDolimite && (
+                        <p className="text-[10px] text-emerald mt-1 font-mono">
+                          Valor final: {formatCurrency(valorBase)} − {formatCurrency(descontoR)} = <strong>{formatCurrency(valorAcordo)}</strong>
+                        </p>
+                      )}
+                    </div>
+                    {/* Data de vencimento */}
+                    <div>
+                      <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted flex items-center gap-1.5 mb-1.5">
+                        <Calendar className="w-3.5 h-3.5" /> Data de vencimento
+                      </label>
+                      <input type="date" value={dataVencimento} min={todayStr}
+                        onChange={e => setDataVencimento(e.target.value)}
+                        className="w-full text-xs bg-elevated border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-emerald/60 transition-colors"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Datas de pagamento */}
-            <div className="bg-elevated border border-border-subtle rounded-xl p-3 mt-2 space-y-2.5">
-              <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5" />
-                {modalidade === 'a_vista' ? 'Data de vencimento' : 'Data do primeiro pagamento'}
-              </p>
+              {/* ── CARD PARCELADO ── */}
+              <div
+                onClick={() => onModalidadeChange('parcelado')}
+                className={`rounded-xl border transition-all cursor-pointer ${modalidade === 'parcelado'
+                  ? 'border-accent ring-1 ring-accent/30 bg-surface'
+                  : 'border-border-default bg-surface hover:border-border-emphasis'}`}
+              >
+                {/* Header do card */}
+                <div className="flex items-center justify-between p-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      modalidade === 'parcelado' ? 'border-accent' : 'border-border-emphasis'
+                    }`}>
+                      {modalidade === 'parcelado' && <div className="w-2 h-2 rounded-full bg-accent" />}
+                    </div>
+                    <span className="text-sm font-semibold text-ink-primary">Parcelado</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-mono font-bold text-base text-accent">
+                      {numParcelas}x de {formatCurrency(valorParcela)}
+                    </p>
+                    <p className="text-[10px] text-ink-muted font-mono">Total: {formatCurrency(valorAcordo)}</p>
+                  </div>
+                </div>
 
-              {modalidade === 'a_vista' ? (
-                <input
-                  type="date"
-                  value={dataVencimento}
-                  min={todayStr}
-                  onChange={e => setDataVencimento(e.target.value)}
-                  className="w-full text-xs bg-surface border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-accent/60 transition-colors"
-                />
-              ) : (
-                <>
-                  <input
-                    type="date"
-                    value={dataPrimeira}
-                    min={todayStr}
-                    onChange={e => setDataPrimeira(e.target.value)}
-                    className="w-full text-xs bg-surface border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-accent/60 transition-colors"
-                  />
-                  {/* Calendário de parcelas */}
-                  {dataPrimeira && numParcelas > 1 && (
-                    <div className="mt-1">
-                      <p className="text-[10px] text-ink-muted mb-1.5">Cronograma de pagamentos:</p>
-                      <div className="space-y-1">
-                        {datasParcelamento.map((data, i) => (
-                          <div key={i} className="flex items-center justify-between text-xs bg-surface rounded-lg px-2.5 py-1.5 border border-border-subtle">
-                            <span className="text-ink-muted font-mono">Parcela {i + 1}/{numParcelas}</span>
-                            <span className="font-mono text-ink-secondary">{formatDate(data)}</span>
-                            <span className="font-mono font-bold text-accent">{formatCurrency(valorParcela)}</span>
-                          </div>
+                {/* Expandido quando selecionado */}
+                {modalidade === 'parcelado' && (
+                  <div className="px-3 pb-3 space-y-3 border-t border-accent/15 pt-3" onClick={e => e.stopPropagation()}>
+                    {/* Seletor de parcelas */}
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted mb-1.5">Número de parcelas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Array.from({ length: maxParcelas }, (_, i) => i + 1).map(n => (
+                          <button key={n} onClick={() => setNumParcelas(n)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                              numParcelas === n
+                                ? 'bg-accent text-white shadow-sm'
+                                : 'bg-elevated border border-border-default text-ink-secondary hover:border-accent/50'
+                            }`}
+                          >
+                            {n}x
+                          </button>
                         ))}
-                        <div className="flex items-center justify-between text-xs font-bold px-2.5 py-1.5 border-t border-border-subtle mt-1">
-                          <span className="text-ink-secondary">Total</span>
-                          <span className="font-mono text-emerald">{formatCurrency(valorAcordo)}</span>
-                        </div>
                       </div>
                     </div>
-                  )}
-                </>
-              )}
+
+                    {/* Desconto opcional */}
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-wider text-ink-muted mb-1.5">Desconto (opcional)</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-ink-muted block mb-1">Em R$</label>
+                          <input type="number" step="0.01" min="0" max={valorBase}
+                            value={descontoValor} onChange={e => onDescontoValorChange(e.target.value)}
+                            placeholder="0,00"
+                            className="w-full text-xs bg-elevated border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-accent/60 transition-colors"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-ink-muted block mb-1">Em %</label>
+                          <input type="number" step="0.1" min="0" max="100"
+                            value={descontoPct} onChange={e => onDescontoPctChange(e.target.value)}
+                            placeholder="0.0"
+                            className={`w-full text-xs bg-elevated border rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none transition-colors ${
+                              acimaDolimite ? 'border-danger' : 'border-border-default focus:border-accent/60'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      {acimaDolimite && (
+                        <p className="flex items-center gap-1 text-danger text-[10px] mt-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          Limite do credor: {limitePct}% — desconto acima do permitido
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Data do primeiro pagamento */}
+                    <div>
+                      <label className="text-[10px] font-mono uppercase tracking-wider text-ink-muted flex items-center gap-1.5 mb-1.5">
+                        <Calendar className="w-3.5 h-3.5" /> Data do primeiro pagamento
+                      </label>
+                      <input type="date" value={dataPrimeira} min={todayStr}
+                        onChange={e => setDataPrimeira(e.target.value)}
+                        className="w-full text-xs bg-elevated border border-border-default rounded-lg px-2.5 py-2 text-ink-primary focus:outline-none focus:border-accent/60 transition-colors"
+                      />
+                    </div>
+
+                    {/* Cronograma de parcelas */}
+                    {dataPrimeira && numParcelas > 1 && (
+                      <div>
+                        <p className="text-[10px] text-ink-muted font-mono mb-1.5">Cronograma de pagamentos:</p>
+                        <div className="space-y-1">
+                          {datasParcelamento.map((data, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs bg-elevated rounded-lg px-2.5 py-1.5 border border-border-subtle">
+                              <span className="text-ink-muted font-mono w-20">Parcela {i + 1}/{numParcelas}</span>
+                              <span className="font-mono text-ink-secondary">{formatDate(data)}</span>
+                              <span className="font-mono font-bold text-accent">{formatCurrency(valorParcela)}</span>
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-between text-xs font-bold px-2.5 py-1.5 border-t border-border-subtle">
+                            <span className="text-ink-secondary">Total</span>
+                            <span className="font-mono text-emerald">{formatCurrency(valorAcordo)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
