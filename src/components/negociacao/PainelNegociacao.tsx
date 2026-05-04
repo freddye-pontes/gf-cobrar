@@ -239,7 +239,7 @@ export function PainelNegociacao({ divida, negociacao, simulacao, cobrancaAtiva,
                     }`}>
                       {modalidade === 'a_vista' && <div className="w-2 h-2 rounded-full bg-emerald" />}
                     </div>
-                    <span className="text-sm font-semibold text-ink-primary">À vista com desconto</span>
+                    <span className="text-sm font-semibold text-[#1A1A1A]">À vista com desconto</span>
                   </div>
                   <div className="text-right">
                     <p className="font-mono font-bold text-base text-emerald">{formatCurrency(valorAcordo)}</p>
@@ -318,13 +318,13 @@ export function PainelNegociacao({ divida, negociacao, simulacao, cobrancaAtiva,
                     }`}>
                       {modalidade === 'parcelado' && <div className="w-2 h-2 rounded-full bg-accent" />}
                     </div>
-                    <span className="text-sm font-semibold text-ink-primary">Parcelado</span>
+                    <span className="text-sm font-semibold text-[#1A1A1A]">Parcelado</span>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono font-bold text-base text-accent">
+                    <p className="font-mono font-bold text-base text-[#FF6600]">
                       {numParcelas}x de {formatCurrency(valorParcela)}
                     </p>
-                    <p className="text-[10px] text-ink-muted font-mono">Total: {formatCurrency(valorAcordo)}</p>
+                    <p className="text-[10px] text-[#64748B] font-mono">Total: {formatCurrency(valorAcordo)}</p>
                   </div>
                 </div>
 
