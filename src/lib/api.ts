@@ -184,20 +184,33 @@ export interface APICobranca {
   forma_pagamento: 'pix' | 'boleto' | 'link_parcelado'
   valor: number
   data_vencimento: string
-  status: 'pendente' | 'aguardando_pagamento' | 'pago' | 'cancelado' | 'expirado'
+  numero_parcelas: number | null
+  status: 'pendente' | 'aguardando_pagamento' | 'pago' | 'cancelado' | 'expirado' | 'erro'
+  // Asaas
+  asaas_id: string | null
+  asaas_payment_id: string | null
+  asaas_url_fatura: string | null
+  // PIX
   pix_qr_code: string | null
+  pix_qr_code_imagem: string | null
   pix_copia_cola: string | null
+  // Boleto
   boleto_url: string | null
   boleto_codigo: string | null
+  boleto_linha_digitavel: string | null
+  boleto_codigo_barras: string | null
+  // Link
   link_pagamento: string | null
-  numero_parcelas: number | null
+  // Conciliação
   data_pagamento_confirmado: string | null
   forma_confirmacao: string | null
   comprovante_url: string | null
+  // Envio
   enviado_whatsapp: boolean
   enviado_email: boolean
   canal_envio: string | null
   data_envio: string | null
+  erro_mensagem: string | null
   created_at: string
   updated_at: string
 }
@@ -351,12 +364,15 @@ export const negociacoesApi = {
 // ── Cobranças ─────────────────────────────────────────────────────────────────
 
 export const cobrancasApi = {
-  create: (body: unknown) => post<APICobranca>('/cobrancas/', body),
+  criar: (body: unknown) => post<APICobranca>('/cobrancas/', body),
+  create: (body: unknown) => post<APICobranca>('/cobrancas/', body),  // compat
   get: (id: number) => get<APICobranca>(`/cobrancas/${id}`),
   byNegociacao: (negId: number) => get<APICobranca[]>(`/cobrancas/negociacao/${negId}`),
+  porNegociacao: (negId: number) => get<APICobranca[]>(`/cobrancas/negociacao/${negId}`),
   confirmar: (id: number, body: unknown) => put<APICobranca>(`/cobrancas/${id}/confirmar`, body),
   cancelar: (id: number) => put<APICobranca>(`/cobrancas/${id}/cancelar`, {}),
-  reenviar: (id: number) => post<void>(`/cobrancas/${id}/reenviar`, {}),
+  reenviar: (id: number, canal = 'whatsapp') =>
+    post<{ url_whatsapp?: string; link_cobranca: string }>(`/cobrancas/${id}/reenviar?canal=${canal}`, {}),
 }
 
 // ── Repasses ──────────────────────────────────────────────────────────────────

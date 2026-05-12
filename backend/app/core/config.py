@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
     ENVIRONMENT: str = "production"
 
+    # Asaas
+    ASAAS_API_KEY: str = "$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjM3YmQzMDQ3LWM2NWUtNGQ3NC04MGIyLTUwNTQ1Zjc1ZWIzOTo6JGFhY2hfMTc3ZjM0NDktNjc0NS00NDQzLTk5NWQtNzU5YWJhY2ViYTEz"
+    ASAAS_BASE_URL: str = "https://www.asaas.com/api/v3"
+    ASAAS_WEBHOOK_TOKEN: str = ""
+    BACKEND_PUBLIC_URL: str = "https://gf-cobrar.onrender.com"
+
     @property
     def cors_origins_list(self) -> List[str]:
         try:

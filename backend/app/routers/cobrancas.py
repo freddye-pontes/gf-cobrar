@@ -1,29 +1,58 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from datetime import date, datetime
+from urllib.parse import quote
 
 from app.database import get_db
 from app.models import Cobranca, Negociacao, Divida
+from app.models.devedor import Devedor
 from app.schemas.cobranca import CobrancaCreate, CobrancaOut, ConfirmarPagamentoPayload
+from app.services import asaas as asaas_svc
+from app.services.asaas import AsaasError
 
 router = APIRouter(prefix="/cobrancas", tags=["cobrancas"])
 
 
-def _gerar_dados_pix(valor: float, devedor_nome: str) -> dict:
-    """Gera dados mock de PIX — integração real fica para Fase 4."""
-    return {
-        "pix_qr_code": f"mock_qr_{valor:.2f}",
-        "pix_copia_cola": f"00020126580014br.gov.bcb.pix0136mock-pix-key-{valor:.0f}5204000053039865802BR5913{devedor_nome[:13].upper()}6008BRASILIA62070503***6304ABCD",
-    }
+def _load_cobranca(cobranca_id: int, db: Session) -> Cobranca:
+    c = db.query(Cobranca).filter(Cobranca.id == cobranca_id).first()
+    if not c:
+        raise HTTPException(status_code=404, detail="Cobrança não encontrada")
+    return c
 
 
-def _gerar_dados_boleto(valor: float) -> dict:
-    """Gera dados mock de boleto."""
-    return {
-        "boleto_url": f"https://placeholder.boleto/mock/{valor:.0f}",
-        "boleto_codigo": f"23790.00000 00000.000000 00000.000000 0 {int(valor):017d}",
-    }
+def _baixar_pagamento(
+    cobranca: Cobranca,
+    data_pagamento: date,
+    forma_confirmacao: str,
+    db: Session,
+) -> None:
+    cobranca.status = "pago"
+    cobranca.data_pagamento_confirmado = data_pagamento
+    cobranca.forma_confirmacao = forma_confirmacao
 
+    neg = db.query(Negociacao).filter(Negociacao.id == cobranca.negociacao_id).first()
+    divida = (
+        db.query(Divida)
+        .options(joinedload(Divida.credor))
+        .filter(Divida.id == cobranca.divida_id)
+        .first()
+    )
+
+    if divida:
+        divida.status = "pago"
+        divida.data_pagamento_confirmado = data_pagamento
+        divida.valor_negociado = float(cobranca.valor)
+        if divida.credor:
+            pct = float(divida.credor.comissao_percentual or 0)
+            divida.comissao_percentual = pct
+
+    if neg:
+        neg.status = "concluida"
+        neg.status_detalhe = "pago"
+        neg.data_conclusao = data_pagamento
+
+
+# ── POST / — Criar cobrança via Asaas ─────────────────────────────────────────
 
 @router.post("/", response_model=CobrancaOut, status_code=status.HTTP_201_CREATED)
 def criar_cobranca(payload: CobrancaCreate, db: Session = Depends(get_db)):
@@ -40,39 +69,97 @@ def criar_cobranca(payload: CobrancaCreate, db: Session = Depends(get_db)):
     if not divida:
         raise HTTPException(status_code=404, detail="Dívida não encontrada")
 
+    # Verificar cobrança ativa existente
+    cobranca_ativa = (
+        db.query(Cobranca)
+        .filter(
+            Cobranca.negociacao_id == payload.negociacao_id,
+            Cobranca.status.notin_(["cancelado", "expirado", "erro"]),
+        )
+        .first()
+    )
+    if cobranca_ativa:
+        raise HTTPException(status_code=409, detail="Já existe uma cobrança ativa para esta negociação")
+
+    devedor: Devedor | None = neg.divida.devedor if neg.divida else None
+    data_venc = (
+        payload.data_vencimento.isoformat()
+        if payload.data_vencimento
+        else date.today().isoformat()
+    )
+    descricao = f"Cobrança GF Recebíveis — {divida.chave_divida}"
+
     cobranca = Cobranca(
         negociacao_id=payload.negociacao_id,
         divida_id=payload.divida_id,
         forma_pagamento=payload.forma_pagamento,
         valor=payload.valor,
-        data_vencimento=payload.data_vencimento,
-        status="aguardando_pagamento",
+        data_vencimento=payload.data_vencimento or date.today(),
         numero_parcelas=payload.numero_parcelas,
+        status="pendente",
         data_envio=datetime.now(),
     )
 
-    devedor_nome = neg.divida.devedor.nome if (neg.divida and neg.divida.devedor) else "DEVEDOR"
+    try:
+        customer_id = asaas_svc.buscar_ou_criar_cliente(
+            nome=devedor.nome if devedor else "Devedor",
+            cpf_cnpj=devedor.cpf_cnpj if devedor else "",
+            email=devedor.email if devedor else None,
+            telefone=devedor.telefones[0] if devedor and devedor.telefones else None,
+            cep=devedor.cep if devedor else None,
+        )
 
-    if payload.forma_pagamento == "pix":
-        dados = _gerar_dados_pix(payload.valor, devedor_nome)
-        cobranca.pix_qr_code = dados["pix_qr_code"]
-        cobranca.pix_copia_cola = dados["pix_copia_cola"]
-        cobranca.canal_envio = "pix"
-    elif payload.forma_pagamento == "boleto":
-        dados = _gerar_dados_boleto(payload.valor)
-        cobranca.boleto_url = dados["boleto_url"]
-        cobranca.boleto_codigo = dados["boleto_codigo"]
-        cobranca.canal_envio = "boleto"
-    elif payload.forma_pagamento == "link_parcelado":
-        cobranca.link_pagamento = f"https://placeholder.link/mock/{payload.valor:.0f}"
-        cobranca.canal_envio = "link"
+        if payload.forma_pagamento == "pix":
+            resultado = asaas_svc.criar_cobranca_pix(
+                customer_id, payload.valor, descricao, divida.chave_divida, data_venc
+            )
+            cobranca.asaas_id = resultado["asaas_id"]
+            cobranca.pix_copia_cola = resultado.get("pix_copia_cola")
+            cobranca.pix_qr_code = resultado.get("pix_qr_code_imagem")
+            cobranca.pix_qr_code_imagem = resultado.get("pix_qr_code_imagem")
+            cobranca.asaas_url_fatura = resultado.get("asaas_url_fatura")
 
-    # Atualizar status da negociação
-    neg.status_detalhe = "aguardando_pagamento"
+        elif payload.forma_pagamento == "boleto":
+            resultado = asaas_svc.criar_cobranca_boleto(
+                customer_id, payload.valor, descricao, divida.chave_divida, data_venc
+            )
+            cobranca.asaas_id = resultado["asaas_id"]
+            cobranca.boleto_url = resultado.get("boleto_url")
+            cobranca.boleto_linha_digitavel = resultado.get("boleto_linha_digitavel")
+            cobranca.boleto_codigo = resultado.get("boleto_linha_digitavel")  # compat
+            cobranca.boleto_codigo_barras = resultado.get("boleto_codigo_barras")
+            cobranca.asaas_url_fatura = resultado.get("asaas_url_fatura")
 
-    # Atualizar status da dívida para ptp_ativa se ainda não for pago
+        elif payload.forma_pagamento == "link_parcelado":
+            resultado = asaas_svc.criar_link_parcelado(
+                customer_id, payload.valor, descricao, divida.chave_divida,
+                payload.numero_parcelas or 1, data_venc
+            )
+            cobranca.asaas_id = resultado["asaas_id"]
+            cobranca.link_pagamento = resultado.get("link_pagamento")
+            cobranca.asaas_url_fatura = resultado.get("asaas_url_fatura")
+
+        cobranca.status = "aguardando_pagamento"
+
+    except AsaasError as e:
+        cobranca.status = "erro"
+        cobranca.erro_mensagem = e.message
+        db.add(cobranca)
+        db.commit()
+        raise HTTPException(status_code=502, detail=f"Erro Asaas: {e.message}")
+    except Exception as e:
+        cobranca.status = "erro"
+        cobranca.erro_mensagem = str(e)
+        db.add(cobranca)
+        db.commit()
+        raise HTTPException(status_code=502, detail=f"Erro ao criar cobrança: {e}")
+
+    # Atualizar status da dívida
     if divida.status not in ("pago", "encerrado"):
         divida.status = "ptp_ativa"
+
+    # Atualizar status_detalhe da negociação
+    neg.status_detalhe = "aguardando_pagamento"
 
     db.add(cobranca)
     db.commit()
@@ -80,13 +167,14 @@ def criar_cobranca(payload: CobrancaCreate, db: Session = Depends(get_db)):
     return cobranca
 
 
+# ── GET /{id} ─────────────────────────────────────────────────────────────────
+
 @router.get("/{cobranca_id}", response_model=CobrancaOut)
 def get_cobranca(cobranca_id: int, db: Session = Depends(get_db)):
-    c = db.query(Cobranca).filter(Cobranca.id == cobranca_id).first()
-    if not c:
-        raise HTTPException(status_code=404, detail="Cobrança não encontrada")
-    return c
+    return _load_cobranca(cobranca_id, db)
 
+
+# ── GET /negociacao/{neg_id} ──────────────────────────────────────────────────
 
 @router.get("/negociacao/{neg_id}", response_model=list[CobrancaOut])
 def cobracas_por_negociacao(neg_id: int, db: Session = Depends(get_db)):
@@ -98,60 +186,32 @@ def cobracas_por_negociacao(neg_id: int, db: Session = Depends(get_db)):
     )
 
 
+# ── PUT /{id}/confirmar ───────────────────────────────────────────────────────
+
 @router.put("/{cobranca_id}/confirmar", response_model=CobrancaOut)
 def confirmar_pagamento(
     cobranca_id: int,
     payload: ConfirmarPagamentoPayload,
     db: Session = Depends(get_db),
 ):
-    cobranca = (
-        db.query(Cobranca)
-        .options(
-            joinedload(Cobranca.negociacao).joinedload(Negociacao.divida).joinedload(Divida.credor)
-        )
-        .filter(Cobranca.id == cobranca_id)
-        .first()
-    )
-    if not cobranca:
-        raise HTTPException(status_code=404, detail="Cobrança não encontrada")
-
-    cobranca.status = "pago"
-    cobranca.data_pagamento_confirmado = payload.data_pagamento
-    cobranca.forma_confirmacao = payload.forma_confirmacao
+    cobranca = _load_cobranca(cobranca_id, db)
+    _baixar_pagamento(cobranca, payload.data_pagamento, payload.forma_confirmacao, db)
     if payload.comprovante_url:
         cobranca.comprovante_url = payload.comprovante_url
-
-    neg = cobranca.negociacao
-    if neg:
-        neg.status = "concluida"
-        neg.status_detalhe = "pago"
-        neg.data_conclusao = date.today()
-
-        divida = neg.divida
-        if divida:
-            divida.status = "pago"
-            divida.data_pagamento_confirmado = payload.data_pagamento
-            divida.valor_negociado = float(neg.valor_oferta)
-            if neg.desconto_percentual:
-                divida.desconto_aplicado = float(neg.desconto_percentual)
-            pct = float(
-                neg.comissao_percentual
-                or divida.comissao_percentual
-                or (divida.credor.comissao_percentual if divida.credor else 0)
-                or 0
-            )
-            divida.comissao_percentual = pct
-
     db.commit()
     db.refresh(cobranca)
     return cobranca
 
 
+# ── PUT /{id}/cancelar ────────────────────────────────────────────────────────
+
 @router.put("/{cobranca_id}/cancelar", response_model=CobrancaOut)
 def cancelar_cobranca(cobranca_id: int, db: Session = Depends(get_db)):
-    cobranca = db.query(Cobranca).filter(Cobranca.id == cobranca_id).first()
-    if not cobranca:
-        raise HTTPException(status_code=404, detail="Cobrança não encontrada")
+    cobranca = _load_cobranca(cobranca_id, db)
+
+    if cobranca.asaas_id:
+        asaas_svc.cancelar_cobranca(cobranca.asaas_id)
+
     cobranca.status = "cancelado"
 
     neg = db.query(Negociacao).filter(Negociacao.id == cobranca.negociacao_id).first()
@@ -167,11 +227,39 @@ def cancelar_cobranca(cobranca_id: int, db: Session = Depends(get_db)):
     return cobranca
 
 
-@router.post("/{cobranca_id}/reenviar", status_code=status.HTTP_204_NO_CONTENT)
-def reenviar_cobranca(cobranca_id: int, db: Session = Depends(get_db)):
-    cobranca = db.query(Cobranca).filter(Cobranca.id == cobranca_id).first()
-    if not cobranca:
-        raise HTTPException(status_code=404, detail="Cobrança não encontrada")
-    # Integração real com WhatsApp fica para Fase 4
-    cobranca.data_envio = datetime.now()
-    db.commit()
+# ── POST /{id}/reenviar ───────────────────────────────────────────────────────
+
+@router.post("/{cobranca_id}/reenviar")
+def reenviar_cobranca(
+    cobranca_id: int,
+    canal: str = Query(default="whatsapp"),
+    db: Session = Depends(get_db),
+):
+    cobranca = _load_cobranca(cobranca_id, db)
+
+    link_cobranca = (
+        cobranca.asaas_url_fatura
+        or cobranca.boleto_url
+        or cobranca.link_pagamento
+        or cobranca.pix_copia_cola
+        or ""
+    )
+
+    url_whatsapp = None
+    if canal == "whatsapp":
+        divida = db.query(Divida).options(joinedload(Divida.devedor)).filter(
+            Divida.id == cobranca.divida_id
+        ).first()
+        if divida and divida.devedor and divida.devedor.telefones:
+            tel_raw = divida.devedor.telefones[0]
+            tel_digits = "".join(x for x in tel_raw if x.isdigit())
+            if not tel_digits.startswith("55"):
+                tel_digits = "55" + tel_digits
+            msg = f"Olá! Segue o link para pagamento da sua cobrança GF Recebíveis: {link_cobranca}"
+            url_whatsapp = f"https://wa.me/{tel_digits}?text={quote(msg)}"
+
+        cobranca.enviado_whatsapp = True
+        cobranca.data_envio = datetime.now()
+        db.commit()
+
+    return {"url_whatsapp": url_whatsapp, "link_cobranca": link_cobranca}
