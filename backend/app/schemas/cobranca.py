@@ -60,6 +60,12 @@ class CobrancaOut(BaseModel):
     canal_envio: Optional[str] = None
     data_envio: Optional[datetime] = None
 
+    # Visualização Asaas
+    checkout_visualizado: bool = False
+    checkout_visualizado_em: Optional[datetime] = None
+    asaas_status_raw: Optional[str] = None
+    asaas_sincronizado_em: Optional[datetime] = None
+
     # Erro
     erro_mensagem: Optional[str] = None
 

@@ -24,8 +24,20 @@ export function formatCurrencyCompact(value: number): string {
 }
 
 export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00')
+  if (!dateStr) return '—'
+  // Se já é um datetime ISO completo (contém 'T'), usa direto; senão adiciona T00:00:00
+  const normalized = dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00'
+  const date = new Date(normalized)
+  if (isNaN(date.getTime())) return '—'
   return date.toLocaleDateString('pt-BR')
+}
+
+export function formatDateTime(dateStr: string): string {
+  if (!dateStr) return '—'
+  const normalized = dateStr.includes('T') ? dateStr : dateStr + 'T00:00:00'
+  const date = new Date(normalized)
+  if (isNaN(date.getTime())) return '—'
+  return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDateShort(dateStr: string): string {

@@ -28,13 +28,22 @@ def _client() -> httpx.Client:
 
 def _check(resp: httpx.Response) -> dict:
     if resp.status_code >= 400:
+        errors_list = []
+        msg = f"Erro HTTP {resp.status_code}"
         try:
             body = resp.json()
-            errors = body.get("errors", [])
-            msg = errors[0].get("description", resp.text) if errors else resp.text
+            errors_list = body.get("errors", [])
+            if errors_list:
+                msg = errors_list[0].get("description", str(errors_list[0]))
+            elif body.get("message"):
+                msg = body["message"]
+            elif body.get("detail"):
+                msg = body["detail"]
+            else:
+                msg = resp.text[:200]
         except Exception:
-            msg = resp.text
-        raise AsaasError(message=msg, errors=errors if "errors" in locals() else [])
+            msg = resp.text[:200]
+        raise AsaasError(message=msg, errors=errors_list)
     try:
         return resp.json()
     except Exception:
@@ -205,6 +214,49 @@ def consultar_status(asaas_id: str) -> str:
         return data.get("status", "UNKNOWN")
 
 
+# Status Asaas → label PT-BR
+ASAAS_STATUS_MAP = {
+    "PENDING": "Aguardando pagamento",
+    "AWAITING_RISK_ANALYSIS": "Em análise de risco",
+    "APPROVED_BY_RISK_ANALYSIS": "Aprovado",
+    "RECEIVED": "Recebido",
+    "CONFIRMED": "Confirmado",
+    "OVERDUE": "Vencido",
+    "REFUNDED": "Estornado",
+    "RECEIVED_IN_CASH": "Recebido em dinheiro",
+    "REFUND_REQUESTED": "Estorno solicitado",
+    "CHARGEBACK_REQUESTED": "Chargeback solicitado",
+    "DUNNING_RECEIVED": "Negativação recebida",
+    "DELETED": "Removido",
+}
+
+
+def consultar_status_completo(asaas_id: str) -> dict:
+    """Retorna status completo da cobrança no Asaas incluindo datas de eventos."""
+    with _client() as c:
+        resp = c.get(f"/payments/{asaas_id}")
+        data = _check(resp)
+
+        status_raw = data.get("status", "UNKNOWN")
+        pago = status_raw in ("RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH")
+
+        return {
+            "asaas_id": asaas_id,
+            "status_raw": status_raw,
+            "status_label": ASAAS_STATUS_MAP.get(status_raw, status_raw),
+            "pago": pago,
+            "valor": data.get("value"),
+            "data_vencimento": data.get("dueDate"),
+            "data_pagamento": data.get("paymentDate") or data.get("confirmedDate"),
+            "data_credito": data.get("creditDate"),
+            "fatura_url": data.get("invoiceUrl"),
+            "invoice_viewed_date": data.get("invoiceViewedDate"),
+            "bank_slip_viewed_date": data.get("bankSlipViewedDate"),
+            "billing_type": data.get("billingType"),
+            "net_value": data.get("netValue"),
+        }
+
+
 def registrar_webhook(url: str) -> bool:
     payload = {
         "url": url,
@@ -219,6 +271,8 @@ def registrar_webhook(url: str) -> bool:
             "PAYMENT_OVERDUE",
             "PAYMENT_DELETED",
             "PAYMENT_REFUNDED",
+            "PAYMENT_CHECKOUT_VIEWED",
+            "PAYMENT_BANK_SLIP_VIEWED",
         ],
     }
     try:

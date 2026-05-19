@@ -263,3 +263,54 @@ def reenviar_cobranca(
         db.commit()
 
     return {"url_whatsapp": url_whatsapp, "link_cobranca": link_cobranca}
+
+
+# ── GET /{id}/sincronizar — busca status atual no Asaas ──────────────────────
+
+@router.get("/{cobranca_id}/sincronizar")
+def sincronizar_cobranca(cobranca_id: int, db: Session = Depends(get_db)):
+    cobranca = _load_cobranca(cobranca_id, db)
+
+    if not cobranca.asaas_id:
+        raise HTTPException(status_code=400, detail="Esta cobrança não tem ID Asaas — não foi gerada via integração.")
+
+    try:
+        info = asaas_svc.consultar_status_completo(cobranca.asaas_id)
+    except AsaasError as e:
+        raise HTTPException(status_code=502, detail=f"Erro Asaas: {e.message}")
+
+    # Sincronizar campos
+    cobranca.asaas_status_raw = info["status_raw"]
+    cobranca.asaas_sincronizado_em = datetime.now()
+
+    pago = info["status_raw"] in ("RECEIVED", "CONFIRMED", "RECEIVED_IN_CASH")
+    if pago and cobranca.status != "pago":
+        data_pgto = info.get("data_pagamento")
+        from datetime import date as ddate
+        dt = ddate.fromisoformat(data_pgto) if data_pgto else ddate.today()
+        _baixar_pagamento(cobranca, dt, "automatica_asaas", db)
+
+    # Visualização
+    vd = info.get("invoice_viewed_date") or info.get("bank_slip_viewed_date")
+    if vd and not cobranca.checkout_visualizado:
+        cobranca.checkout_visualizado = True
+        cobranca.checkout_visualizado_em = datetime.fromisoformat(vd) if isinstance(vd, str) else datetime.now()
+
+    db.commit()
+    db.refresh(cobranca)
+
+    return {
+        "cobranca_id": cobranca_id,
+        "asaas_id": cobranca.asaas_id,
+        "status_raw": info["status_raw"],
+        "status_label": info["status_label"],
+        "pago": pago,
+        "checkout_visualizado": cobranca.checkout_visualizado,
+        "checkout_visualizado_em": cobranca.checkout_visualizado_em,
+        "data_pagamento": info.get("data_pagamento"),
+        "data_credito": info.get("data_credito"),
+        "fatura_url": info.get("fatura_url"),
+        "billing_type": info.get("billing_type"),
+        "net_value": info.get("net_value"),
+        "sincronizado_em": cobranca.asaas_sincronizado_em,
+    }

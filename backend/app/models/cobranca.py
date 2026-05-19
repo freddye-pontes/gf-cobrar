@@ -55,6 +55,14 @@ class Cobranca(Base):
     canal_envio: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     data_envio: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
+    # Visualização (eventos Asaas)
+    checkout_visualizado: Mapped[bool] = mapped_column(Boolean, default=False)
+    checkout_visualizado_em: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+    # Sync Asaas
+    asaas_status_raw: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    asaas_sincronizado_em: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
     # Erro
     erro_mensagem: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 

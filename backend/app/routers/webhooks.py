@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
-from datetime import date
+from datetime import date, datetime
 
 from app.database import get_db
 from app.models import Cobranca, Divida, Negociacao
 from app.core.config import settings
-from app.services import asaas as asaas_svc
 
 router = APIRouter(tags=["webhooks"])
 
-ASAAS_STATUS_PAGO = {"RECEIVED", "CONFIRMED"}
+EVENTOS_PAGAMENTO = {"PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"}
+EVENTOS_VISUALIZACAO = {"PAYMENT_CHECKOUT_VIEWED", "PAYMENT_BANK_SLIP_VIEWED"}
 
 
 def _baixar_pagamento(cobranca: Cobranca, forma_confirmacao: str, db: Session) -> None:
@@ -32,16 +32,31 @@ def _baixar_pagamento(cobranca: Cobranca, forma_confirmacao: str, db: Session) -
         neg.data_conclusao = hoje
 
 
+def _buscar_cobranca(asaas_id: str, external_ref: str, db: Session):
+    if asaas_id:
+        c = db.query(Cobranca).filter(Cobranca.asaas_id == asaas_id).first()
+        if c:
+            return c
+    if external_ref:
+        divida = db.query(Divida).filter(Divida.chave_divida == external_ref).first()
+        if divida:
+            return (
+                db.query(Cobranca)
+                .filter(
+                    Cobranca.divida_id == divida.id,
+                    Cobranca.status.notin_(["cancelado", "expirado", "erro"]),
+                )
+                .order_by(Cobranca.created_at.desc())
+                .first()
+            )
+    return None
+
+
 @router.post("/webhook/asaas")
 async def asaas_webhook(request: Request, db: Session = Depends(get_db)):
-    """
-    Recebe eventos do Asaas.
-    SEMPRE retorna 200 — nunca 4xx/5xx para o Asaas.
-    """
-    # Validar token
+    """SEMPRE retorna 200 — nunca 4xx/5xx para o Asaas."""
     token = request.headers.get("asaas-access-token", "")
     if settings.ASAAS_WEBHOOK_TOKEN and token != settings.ASAAS_WEBHOOK_TOKEN:
-        # Retornar 200 mesmo assim para não parar reenvios
         return Response(status_code=200)
 
     try:
@@ -52,33 +67,26 @@ async def asaas_webhook(request: Request, db: Session = Depends(get_db)):
     event = body.get("event", "")
     payment = body.get("payment", {})
     asaas_id = payment.get("id")
-    external_ref = payment.get("externalReference")  # = chave_divida
+    external_ref = payment.get("externalReference")
 
-    if event not in ("PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"):
+    cobranca = _buscar_cobranca(asaas_id, external_ref, db)
+    if not cobranca:
         return Response(status_code=200)
 
-    cobranca = None
-
-    # Buscar por asaas_id
-    if asaas_id:
-        cobranca = db.query(Cobranca).filter(Cobranca.asaas_id == asaas_id).first()
-
-    # Fallback: buscar pela chave da dívida
-    if not cobranca and external_ref:
-        divida = db.query(Divida).filter(Divida.chave_divida == external_ref).first()
-        if divida:
-            cobranca = (
-                db.query(Cobranca)
-                .filter(
-                    Cobranca.divida_id == divida.id,
-                    Cobranca.status.notin_(["cancelado", "expirado", "erro"]),
-                )
-                .order_by(Cobranca.created_at.desc())
-                .first()
-            )
-
-    if cobranca and cobranca.status != "pago":
+    if event in EVENTOS_PAGAMENTO and cobranca.status != "pago":
         _baixar_pagamento(cobranca, "automatica_webhook", db)
+        cobranca.asaas_status_raw = "RECEIVED"
+        db.commit()
+
+    elif event in EVENTOS_VISUALIZACAO and not cobranca.checkout_visualizado:
+        cobranca.checkout_visualizado = True
+        cobranca.checkout_visualizado_em = datetime.now()
+        cobranca.asaas_status_raw = payment.get("status", cobranca.asaas_status_raw)
+        db.commit()
+
+    elif event == "PAYMENT_OVERDUE" and cobranca.status == "aguardando_pagamento":
+        cobranca.status = "expirado"
+        cobranca.asaas_status_raw = "OVERDUE"
         db.commit()
 
     return Response(status_code=200)

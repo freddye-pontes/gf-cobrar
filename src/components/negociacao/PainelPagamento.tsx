@@ -4,8 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Clock, CheckCircle2, Copy, Send, X, DollarSign,
-  Loader2, Info, TrendingDown,
+  Loader2, TrendingDown,
 } from 'lucide-react'
+import { AsaasStatusPanel } from './AsaasStatusPanel'
 import {
   cobrancasApi,
   type APICobranca,
@@ -202,60 +203,18 @@ export function PainelPagamento({ cobranca, negociacao, divida }: Props) {
         </div>
       </div>
 
-      {/* ── Pagamento e conciliação (timeline) ────────────────────────────── */}
-      {cobranca && (
-        <div className="bg-surface border border-border-subtle rounded-xl p-4">
-          <p className="text-xs font-semibold text-ink-primary mb-3">Pagamento e conciliação</p>
-          <div className="space-y-3">
-            {[
-              { label: 'Cobrança Gerada', date: cobranca.created_at, done: true },
-              { label: 'Pagamento Identificado', date: cobranca.data_pagamento_confirmado, done: isPago },
-              { label: 'Baixa e Conciliação', date: cobranca.data_pagamento_confirmado, done: isPago },
-            ].map((step, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold transition-colors ${
-                  step.done ? 'bg-emerald text-white' : 'bg-elevated border-2 border-border-default text-ink-muted'
-                }`}>
-                  {step.done ? '✓' : i + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-xs ${step.done ? 'text-ink-primary font-medium' : 'text-ink-secondary'}`}>
-                    {step.label}
-                  </p>
-                  <p className="text-[10px] font-mono text-ink-muted">
-                    {step.done && step.date ? formatDate(step.date) : 'Aguardando confirmação'}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ── Sincronização Asaas (novo demonstrativo) ─────────────────────── */}
+      {cobranca && <AsaasStatusPanel cobranca={cobranca} />}
 
-          {/* Explicação da conciliação */}
-          {!isPago && (
-            <div className="mt-3 bg-elevated rounded-lg px-3 py-2.5 border border-border-subtle">
-              <div className="flex items-start gap-2">
-                <Info className="w-3.5 h-3.5 text-ink-muted shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[10px] font-semibold text-ink-secondary">Como funciona a conciliação?</p>
-                  <p className="text-[10px] text-ink-muted mt-0.5 leading-relaxed">
-                    Assim que o pagamento for confirmado pelo banco ou gateway, o sistema fará a baixa automática e atualizará o status da dívida.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Confirmar manualmente */}
-          {!isPago && cobranca && (
-            <button
-              onClick={() => setConfirmOpen(true)}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 bg-emerald hover:bg-emerald-light text-white text-xs font-semibold rounded-lg transition-colors"
-            >
-              <DollarSign className="w-3.5 h-3.5" />
-              Confirmar pagamento manualmente
-            </button>
-          )}
-        </div>
+      {/* ── Confirmar manualmente ─────────────────────────────────────────── */}
+      {cobranca && !isPago && (
+        <button
+          onClick={() => setConfirmOpen(true)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-emerald hover:bg-emerald-light text-white text-xs font-semibold rounded-lg transition-colors"
+        >
+          <DollarSign className="w-3.5 h-3.5" />
+          Confirmar pagamento manualmente
+        </button>
       )}
 
       {/* ── Resumo financeiro ──────────────────────────────────────────────── */}

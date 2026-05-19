@@ -11,15 +11,24 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
+async function _extractError(res: Response, method: string, path: string): Promise<never> {
+  try {
+    const body = await res.json()
+    const msg = body?.detail ?? body?.message ?? body?.errors?.[0]?.description ?? `${res.status} ${res.statusText}`
+    throw new Error(msg)
+  } catch (e) {
+    if (e instanceof Error && !e.message.startsWith('API')) throw e
+    throw new Error(`API ${method} ${path} → ${res.status}`)
+  }
+}
+
 async function post<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) {
-    throw new Error(`API POST ${path} → ${res.status} ${res.statusText}`)
-  }
+  if (!res.ok) await _extractError(res, 'POST', path)
   return res.json() as Promise<T>
 }
 
@@ -29,9 +38,7 @@ async function put<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) {
-    throw new Error(`API PUT ${path} → ${res.status} ${res.statusText}`)
-  }
+  if (!res.ok) await _extractError(res, 'PUT', path)
   return res.json() as Promise<T>
 }
 
@@ -210,9 +217,29 @@ export interface APICobranca {
   enviado_email: boolean
   canal_envio: string | null
   data_envio: string | null
+  checkout_visualizado: boolean
+  checkout_visualizado_em: string | null
+  asaas_status_raw: string | null
+  asaas_sincronizado_em: string | null
   erro_mensagem: string | null
   created_at: string
   updated_at: string
+}
+
+export interface APIAsaasSyncResult {
+  cobranca_id: number
+  asaas_id: string
+  status_raw: string
+  status_label: string
+  pago: boolean
+  checkout_visualizado: boolean
+  checkout_visualizado_em: string | null
+  data_pagamento: string | null
+  data_credito: string | null
+  fatura_url: string | null
+  billing_type: string | null
+  net_value: number | null
+  sincronizado_em: string
 }
 
 export interface APISimulacaoAcordo {
@@ -373,6 +400,7 @@ export const cobrancasApi = {
   cancelar: (id: number) => put<APICobranca>(`/cobrancas/${id}/cancelar`, {}),
   reenviar: (id: number, canal = 'whatsapp') =>
     post<{ url_whatsapp?: string; link_cobranca: string }>(`/cobrancas/${id}/reenviar?canal=${canal}`, {}),
+  sincronizar: (id: number) => get<APIAsaasSyncResult>(`/cobrancas/${id}/sincronizar`),
 }
 
 // ── Repasses ──────────────────────────────────────────────────────────────────
