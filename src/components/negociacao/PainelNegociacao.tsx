@@ -98,18 +98,21 @@ export function PainelNegociacao({ divida, negociacao, simulacao, cobrancaAtiva,
 
   // ── Handlers de desconto (bidirecional) ────────────────────────────────────
   function onDescontoValorChange(v: string) {
+    setError(null)
     setDescontoValor(v)
     const d = parseFloat(v) || 0
     setDescontoPct(valorBase > 0 ? fmt2((d / valorBase) * 100) : '0.00')
   }
 
   function onDescontoPctChange(v: string) {
+    setError(null)
     setDescontoPct(v)
     const p = parseFloat(v) || 0
     setDescontoValor(fmt2(valorBase * (p / 100)))
   }
 
   function onModalidadeChange(m: Modalidade) {
+    setError(null)
     setModalidade(m)
     if (m === 'a_vista') {
       // Zerar desconto se não houver limite
@@ -472,7 +475,7 @@ export function PainelNegociacao({ divida, negociacao, simulacao, cobrancaAtiva,
           {/* BOTÃO PRINCIPAL */}
           <button
             onClick={gerarCobranca}
-            disabled={loading || acimaDolimite}
+            disabled={loading || acimaDolimite || !!error}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald hover:bg-emerald-light text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -484,7 +487,16 @@ export function PainelNegociacao({ divida, negociacao, simulacao, cobrancaAtiva,
           </p>
 
           {error && (
-            <p className="text-danger text-xs bg-danger-dim border border-danger/20 rounded-lg px-3 py-2">{error}</p>
+            <div className="flex items-start justify-between gap-2 text-danger text-xs bg-danger-dim border border-danger/20 rounded-lg px-3 py-2">
+              <p>{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="shrink-0 text-danger/60 hover:text-danger transition-colors font-bold leading-none"
+                title="Fechar"
+              >
+                ×
+              </button>
+            </div>
           )}
         </>
       )}
