@@ -9,9 +9,9 @@ import { saveSession } from '@/lib/auth'
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
 
 const stats = [
-  { label: 'Taxa de recuperação', value: '68%', sub: 'média da carteira', color: '#10B981' },
-  { label: 'Tempo de resposta', value: '< 2h', sub: 'primeiro contato', color: '#FF6600' },
-  { label: 'Credores ativos', value: '12+', sub: 'na plataforma', color: '#6366F1' },
+  { label: 'Taxa de recuperação', value: '68%', sub: 'média da carteira', color: '#FF6600' },
+  { label: 'Tempo de resposta', value: '< 2h', sub: 'primeiro contato', color: '#10B981' },
+  { label: 'Credores ativos', value: '12+', sub: 'na plataforma', color: '#D97706' },
 ]
 
 export default function LoginPage() {
@@ -57,7 +57,7 @@ export default function LoginPage() {
 
       {/* ── Painel esquerdo — branding ─────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden flex-col justify-between p-12"
-        style={{ background: 'linear-gradient(135deg, #0A0F1E 0%, #0D1A12 50%, #0A1520 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #0A0F1E 0%, #160A00 50%, #0A0F1E 100%)' }}>
 
         {/* Grade decorativa */}
         <div className="absolute inset-0 opacity-[0.04]"
@@ -68,12 +68,12 @@ export default function LoginPage() {
         />
 
         {/* Blobs de luz */}
-        <div className="absolute top-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #10B981 0%, transparent 70%)' }} />
-        <div className="absolute bottom-[-60px] right-[-60px] w-[350px] h-[350px] rounded-full opacity-15"
+        <div className="absolute top-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full opacity-25"
           style={{ background: 'radial-gradient(circle, #FF6600 0%, transparent 70%)' }} />
+        <div className="absolute bottom-[-60px] right-[-60px] w-[350px] h-[350px] rounded-full opacity-15"
+          style={{ background: 'radial-gradient(circle, #10B981 0%, transparent 70%)' }} />
         <div className="absolute top-[40%] right-[-100px] w-[300px] h-[300px] rounded-full opacity-10"
-          style={{ background: 'radial-gradient(circle, #6366F1 0%, transparent 70%)' }} />
+          style={{ background: 'radial-gradient(circle, #D97706 0%, transparent 70%)' }} />
 
         {/* Logo */}
         <div className="relative z-10">
@@ -83,13 +83,13 @@ export default function LoginPage() {
         {/* Headline */}
         <div className="relative z-10 space-y-8">
           <div>
-            <p className="text-xs font-mono uppercase tracking-[0.2em] text-emerald-400 mb-4">
+            <p className="text-xs font-mono uppercase tracking-[0.2em] mb-4" style={{ color: '#FF6600' }}>
               Plataforma de Cobrança B2B
             </p>
             <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight"
               style={{ fontFamily: 'Syne, sans-serif' }}>
               Recupere mais.<br />
-              <span style={{ color: '#10B981' }}>Gerencie melhor.</span>
+              <span style={{ color: '#FF6600' }}>Gerencie melhor.</span>
             </h2>
             <p className="mt-4 text-[#94A3B8] text-base leading-relaxed max-w-sm">
               Régua de cobrança inteligente, multi-credor, com negociação em tempo real via WhatsApp, boleto e PIX.
@@ -120,8 +120,8 @@ export default function LoginPage() {
             ].map(f => (
               <div key={f.text} className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                  style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                  <f.icon className="w-3.5 h-3.5" style={{ color: '#10B981' }} />
+                  style={{ background: 'rgba(255,102,0,0.15)', border: '1px solid rgba(255,102,0,0.2)' }}>
+                  <f.icon className="w-3.5 h-3.5" style={{ color: '#FF6600' }} />
                 </div>
                 <span className="text-sm text-[#94A3B8]">{f.text}</span>
               </div>
@@ -166,7 +166,7 @@ export default function LoginPage() {
                 placeholder="seu@email.com"
                 required
                 autoComplete="email"
-                className="w-full text-sm bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#0F172A] placeholder:text-[#CBD5E1] shadow-sm focus:outline-none focus:border-[#10B981] focus:ring-3 focus:ring-[#10B981]/10 transition-all"
+                className="w-full text-sm bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-[#0F172A] placeholder:text-[#CBD5E1] shadow-sm focus:outline-none focus:border-[#FF6600] focus:ring-3 focus:ring-[#FF6600]/10 transition-all"
               />
             </div>
 
@@ -182,7 +182,7 @@ export default function LoginPage() {
                   placeholder="••••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full text-sm bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 pr-11 text-[#0F172A] placeholder:text-[#CBD5E1] shadow-sm focus:outline-none focus:border-[#10B981] focus:ring-3 focus:ring-[#10B981]/10 transition-all"
+                  className="w-full text-sm bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 pr-11 text-[#0F172A] placeholder:text-[#CBD5E1] shadow-sm focus:outline-none focus:border-[#FF6600] focus:ring-3 focus:ring-[#FF6600]/10 transition-all"
                 />
                 <button
                   type="button"
@@ -207,8 +207,8 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
               style={{
-                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-                boxShadow: loading ? undefined : '0 4px 20px rgba(16,185,129,0.35)',
+                background: 'linear-gradient(135deg, #FF6600 0%, #E65C00 100%)',
+                boxShadow: loading ? undefined : '0 4px 20px rgba(255,102,0,0.35)',
               }}
             >
               {loading ? (
@@ -233,7 +233,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-center gap-4">
             {['JWT Auth', 'LGPD', 'TLS 1.3'].map(tag => (
               <div key={tag} className="flex items-center gap-1.5 text-[10px] text-[#64748B] font-mono">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                 {tag}
               </div>
             ))}
