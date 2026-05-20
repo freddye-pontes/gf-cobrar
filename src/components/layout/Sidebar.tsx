@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   LayoutDashboard,
@@ -17,9 +17,11 @@ import {
   Menu,
   X,
   FileBarChart2,
+  LogOut,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
+import { getUser, clearSession, type AuthUser } from '@/lib/auth'
 
 const navItems = [
   { href: '/dashboard',  label: 'Dashboard',  icon: LayoutDashboard, badge: null },
@@ -33,8 +35,21 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [user, setUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => { setUser(getUser()) }, [])
+
+  function handleLogout() {
+    clearSession()
+    router.push('/login')
+  }
+
+  const initials = user?.nome
+    ? user.nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
+    : 'U'
 
   const SidebarContent = () => (
     <>
@@ -119,22 +134,37 @@ export function Sidebar() {
 
       <div className="mx-3 border-t border-border-subtle" />
 
-      {/* Operator info */}
-      {!collapsed && (
+      {/* Operator info + logout */}
+      {!collapsed ? (
         <div className="px-3 py-3">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-elevated border border-border-default flex items-center justify-center shrink-0">
-              <span className="font-display font-bold text-xs text-ink-secondary">MV</span>
+              <span className="font-display font-bold text-xs text-ink-secondary">{initials}</span>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-ink-primary text-xs font-medium truncate">Marcos Vinicius</div>
+              <div className="text-ink-primary text-xs font-medium truncate">{user?.nome ?? 'Usuário'}</div>
               <div className="text-ink-muted text-[10px] flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald inline-block" />
                 Operador
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              title="Sair"
+              className="text-ink-muted hover:text-danger transition-colors p-1 rounded-lg hover:bg-danger-dim"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
+      ) : (
+        <button
+          onClick={handleLogout}
+          title="Sair"
+          className="flex items-center justify-center py-3 text-ink-muted hover:text-danger hover:bg-danger-dim transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       )}
 
       {/* Collapse button — desktop only */}
