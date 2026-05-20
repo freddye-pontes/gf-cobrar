@@ -76,8 +76,15 @@ export default function LoginPage() {
           style={{ background: 'radial-gradient(circle, #D97706 0%, transparent 70%)' }} />
 
         {/* Logo */}
-        <div className="relative z-10">
-          <Image src="/logo.png" alt="GF Recebíveis" width={160} height={45} className="object-contain h-11 w-auto brightness-0 invert" priority />
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: 'rgba(255,102,0,0.15)', border: '1px solid rgba(255,102,0,0.3)' }}>
+            <span className="text-sm font-bold" style={{ color: '#FF6600', fontFamily: 'Syne, sans-serif' }}>GF</span>
+          </div>
+          <div>
+            <p className="text-white font-bold text-base leading-tight" style={{ fontFamily: 'Syne, sans-serif' }}>GF Recebíveis</p>
+            <p className="text-[10px] font-mono" style={{ color: '#475569' }}>Sistema de Cobrança</p>
+          </div>
         </div>
 
         {/* Headline */}
