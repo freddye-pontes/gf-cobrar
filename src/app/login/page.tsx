@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Loader2, Eye, EyeOff, AlertCircle, TrendingUp, Shield, Zap } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertCircle, TrendingUp, Shield, Zap, Wifi } from 'lucide-react'
 import { saveSession } from '@/lib/auth'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://gf-cobrar.onrender.com/api/v1'
+const BASE_URL = API.replace('/api/v1', '')
 
 const stats = [
   { label: 'Taxa de recuperação', value: '68%', sub: 'média da carteira', color: '#FF6600' },
@@ -21,6 +22,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [warming, setWarming] = useState(true)
+
+  // Aquece o backend assim que a página carrega
+  useEffect(() => {
+    const controller = new AbortController()
+    fetch(`${BASE_URL}/health`, { signal: controller.signal })
+      .catch(() => {})
+      .finally(() => setWarming(false))
+    return () => controller.abort()
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -211,22 +222,30 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
+              disabled={loading || warming}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
               style={{
-                background: 'linear-gradient(135deg, #FF6600 0%, #E65C00 100%)',
-                boxShadow: loading ? undefined : '0 4px 20px rgba(255,102,0,0.35)',
+                background: warming
+                  ? 'linear-gradient(135deg, #94A3B8 0%, #64748B 100%)'
+                  : 'linear-gradient(135deg, #FF6600 0%, #E65C00 100%)',
+                boxShadow: (loading || warming) ? undefined : '0 4px 20px rgba(255,102,0,0.35)',
               }}
             >
               {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Verificando...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" />Verificando...</>
+              ) : warming ? (
+                <><Loader2 className="w-4 h-4 animate-spin" />Conectando ao servidor...</>
               ) : (
                 'Entrar no sistema'
               )}
             </button>
+
+            {warming && (
+              <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#94A3B8]">
+                <Wifi className="w-3 h-3" />
+                Aguarde, iniciando o servidor...
+              </p>
+            )}
           </form>
 
           {/* Divisor */}
